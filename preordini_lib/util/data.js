@@ -7,7 +7,7 @@ var elencoPietanze = {};  // Mappa gli articoli per nome categoria
 // -------------------------------------------------------------------------
 // *** INSERISCI QUI IL TUO URL CSV PUBBLICATO DA GOOGLE SHEETS ***
 // -------------------------------------------------------------------------
-var GOOGLE_SHEET_URL = './menuweb - menuweb.csv'
+var GOOGLE_SHEET_URL = './menuweb.csv'
 // -------------------------------------------------------------------------
 
 
