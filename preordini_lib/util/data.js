@@ -3,7 +3,7 @@
 
 var elencoPrincipale = []; // Contiene i nomi delle categorie (es. "Antipasti")
 var categorie = [];       // Contiene gli oggetti categoria completi
-var elencoPietanze = {};  // Mappa gli articoli per nome categoria (la struttura usata dal resto del codice)
+var elencoPietanze = {};  // Mappa gli articoli per nome categoria 
 
 // ----------------------------------------------------
 // FUNZIONE PER IL CARICAMENTO DEI DATI DA FILE JSON
@@ -27,16 +27,22 @@ function popolaMenuDaJSON() {
                   // Popola elencoPrincipale
                   elencoPrincipale.push(categoriaNome);
 
-                  // Popola elencoPietanze con gli articoli (assumendo che gli articoli siano sotto 'articoli' nel JSON)
+                  // Popola elencoPietanze con gli articoli
                   elencoPietanze[categoriaNome] = categorie[i].articoli || [];
               }
               console.log("Dati del menu caricati con successo da menu.json!");
+              
+              // CHIAMATA ALLA FUNZIONE DI AVVIO:
+              // Avvia l'applicazione (la costruzione della lista) DOPO che i dati sono pronti.
+              if (typeof avviaApplicazione === 'function') {
+                  avviaApplicazione();
+              }
+              
           } else {
               console.error("Struttura di menu.json non valida o vuota.");
           }
       },
       error: function(xhr, status, error) {
-          // Questo errore si verifica se menu.json non esiste o c'è un errore di sintassi JSON.
           console.error("FATAL ERROR: Impossibile caricare il menu. Controlla che menu.json esista e sia valido. Stato:", status, "Errore:", error);
       }
     });
@@ -46,25 +52,17 @@ function popolaMenuDaJSON() {
 popolaMenuDaJSON(); 
 
 // ----------------------------------------------------
-// VECCHIE FUNZIONI DI POPOLAMENTO (Lasciate come stub per compatibilità
-// o rimosse, dato che i dati sono già caricati da popolaMenuDaJSON)
-// Le abbiamo rimosse perché non servono più e confondono.
-// ----------------------------------------------------
-
-// ----------------------------------------------------
 // CLASSE DATA E FUNZIONI DI GESTIONE COOKIE/STORAGE
-// (Lasciate invariate perché gestiscono lo stato locale - hashmap e coperti)
 // ----------------------------------------------------
 
 function Data(){
     
     var riferimentoHashMap = "_hashmap";
     var riferimentoCoperti = "_coperti";
-    var rootURL = "/rest/"; // Variabile non più usata, ma lasciata per compatibilità se il resto del codice la richiede
     
     // Funzione interna per ricreare la hashmap
     function recreateHashmap(value){
-        var hashmap = new HashMap(); // Assumiamo che HashMap sia definita altrove (probabilmente in hashmap.js)
+        var hashmap = new HashMap();
         for(var i = 0; i < value.length; i++){
             hashmap.put(value[i].key, value[i].val);
         }
@@ -104,7 +102,4 @@ function Data(){
             coperti
         );
     }
-    
-    // Non più usato:
-    // var rootURL = "/rest/"; 
 }

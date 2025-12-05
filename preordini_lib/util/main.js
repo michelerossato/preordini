@@ -1,10 +1,19 @@
-$(document).on("pagecreate",function(event){
+// VARIABILI GLOBALI (necessarie per l'uso in più funzioni)
+var graphicManager;
+var dataManager;
+
+// TUTTA la logica di inizializzazione dell'app deve essere qui.
+// Questa funzione viene chiamata da data.js SOLO DOPO che menu.json è stato caricato.
+function avviaApplicazione() {
    
-   var graphicManager = new GraphicManager();
-   var dataManager = new Data();  
-     
+   // Inizializza i manager solo una volta
+   graphicManager = new GraphicManager();
+   dataManager = new Data();
+   
+   // Aggiunge la gestione degli eventi alla pagina principale
    $(document).on("pagebeforeshow","#pageprinc",function(){
       
+      // QUESTO BLOCCO COSTRUISCE LA LISTA DEGLI ARTICOLI!
       $("#lista").empty().append(
          graphicManager.generateMenu(
             dataManager.getInstanceHashmap()
@@ -65,7 +74,21 @@ $(document).on("pagecreate",function(event){
       });   
    });
    
+   // Logica per le altre pagine (#pageres e #pageqrcode)
+   // Non hanno bisogno di attendere i dati del menu, ma usano gli stessi manager.
+   // Le lasciamo fuori dalla funzione avviaApplicazione per coerenza col tuo codice originale.
+}
+
+// Codice iniziale (eseguito subito)
+$(document).on("pagecreate",function(event){
+   
+   // Inizializza le pagine che NON dipendono dal caricamento del menu (tutto tranne #pageprinc)
+   
+   // La funzione avviaApplicazione() viene chiamata da data.js,
+   // dopo che i dati del menu sono stati caricati.
+     
    $(document).on("pagebeforeshow","#pageres",function(){ 
+      // Qui devi usare le variabili globali definite in avviaApplicazione
       var hashmap = dataManager.getInstanceHashmap();
       if(hashmap.isEmpty()){
          $.mobile.pageContainer.pagecontainer("change", "#pageprinc", {});
@@ -94,21 +117,6 @@ $(document).on("pagecreate",function(event){
    });
    
    $(document).on("pagebeforeshow","#pageqrcode",function(){ 
-      /**
-      function generateTextQRCode(hashmap){
-		 var nomecliente = $('#nomecliente').val();
-		 var numerotavolo = $('#tavolo').val();
-		 var numerocoperti = $('#coperti').val();
-		 
-         var obj = 'numerotavolo:::' + numerotavolo + ';;;cliente:::' + encodeURIComponent(nomecliente) + ';;;coperti:::' + numerocoperti + ';;;';    //{numeroTavolo:numerotavolo,cliente:nomecliente,coperti:numerocoperti,righe:[]};
-         var keys = hashmap.keys();
-         for(var i = 0; i < keys.length; i++){
-			obj = obj + 'id:::' + parseInt(keys[i]) + ';;;qta:::' + hashmap.get(keys[i]) + ';;;';
-
-         }
-         return obj;
-      }
-	  */
 	  function generateTextQRCode(hashmap){
 		 var nomecliente = $('#nomecliente').val();
 		 var numerotavolo = $('#tavolo').val();
@@ -122,6 +130,7 @@ $(document).on("pagecreate",function(event){
          return encodeURIComponent(JSON.stringify(obj));
       }
       
+      // Qui le variabili devono essere definite, ma sono globali ora:
       var hashmap = dataManager.getInstanceHashmap();
       
       if(hashmap.isEmpty()){
