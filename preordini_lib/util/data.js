@@ -7,7 +7,7 @@ var elencoPietanze = {};  // Mappa gli articoli per nome categoria
 // -------------------------------------------------------------------------
 // *** INSERISCI QUI IL TUO URL CSV PUBBLICATO DA GOOGLE SHEETS ***
 // -------------------------------------------------------------------------
-var GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?gid=0&single=true&output=csv" 
+var GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?gid=0&single=true&output=csv'
 // Esempio URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?gid=0&single=true&output=csv"
 // -------------------------------------------------------------------------
 
