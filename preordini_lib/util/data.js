@@ -1,58 +1,97 @@
 // VARIABILI GLOBALI PER IL MENU
-// Verranno popolate dalla chiamata AJAX a menu.json
+// Verranno popolate dalla chiamata AJAX a menu.json (ora CSV da Google Sheet)
 
 var elencoPrincipale = []; // Contiene i nomi delle categorie (es. "Antipasti")
 var categorie = [];       // Contiene gli oggetti categoria completi
 var elencoPietanze = {};  // Mappa gli articoli per nome categoria 
 
 // ----------------------------------------------------
-// FUNZIONE PER IL CARICAMENTO DEI DATI DA FILE JSON
+// NUOVA FUNZIONE PER IL CARICAMENTO DEI DATI DA GOOGLE SHEET CSV
 // ----------------------------------------------------
 
-function popolaMenuDaJSON() {
-    // Carica il file menu.json che deve trovarsi nella root del repository
-    $.ajax({
-      url: "menu.json",
-      async: false,
-      dataType: "json",
-      success: function(data) {
-          
-          // Assumiamo che la struttura JSON sia: { "categorie": [...] }
-          if (data && data.categorie) {
-              categorie = data.categorie;
-              
-              for (var i = 0; i < categorie.length; i++){
-                  var categoriaNome = categorie[i].descrizione;
-                  
-                  // Popola elencoPrincipale
-                  elencoPrincipale.push(categoriaNome);
+function popolaMenuDaCSV() {
+    
+    // URL della tua Google Sheet pubblicata in formato CSV
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?output=csv';
 
-                  // Popola elencoPietanze con gli articoli
-                  elencoPietanze[categoriaNome] = categorie[i].articoli || [];
-              }
-              console.log("Dati del menu caricati con successo da menu.json!");
-              
-              // CHIAMATA ALLA FUNZIONE DI AVVIO:
-              // Avvia l'applicazione (la costruzione della lista) DOPO che i dati sono pronti.
-              if (typeof avviaApplicazione === 'function') {
-                  avviaApplicazione();
-              }
-              
-          } else {
-              console.error("Struttura di menu.json non valida o vuota.");
-          }
-      },
-      error: function(xhr, status, error) {
-          console.error("FATAL ERROR: Impossibile caricare il menu. Controlla che menu.json esista e sia valido. Stato:", status, "Errore:", error);
-      }
+    // PapaParse recupera e analizza il CSV
+    Papa.parse(CSV_URL, {
+        download: true, // Permette a PapaParse di scaricare l'URL
+        header: true,   // Tratta la prima riga del CSV come nomi delle colonne
+        complete: function(results) {
+            
+            // -------------------------------------------------------------------
+            // PARSING E RISTRUTTURAZIONE DEI DATI RICEVUTI
+            // -------------------------------------------------------------------
+            
+            const rawArticoli = results.data.filter(row => row.id && row.CAT); // Filtra righe senza ID o CAT
+            const categorieMap = {}; 
+            
+            // La colonna per il raggruppamento è "CAT"
+            rawArticoli.forEach(articolo => {
+                
+                // *** MODIFICA EFFETTUATA QUI: USIAMO articolo.CAT ***
+                const categoriaNome = articolo.CAT; 
+                
+                if (categoriaNome) { 
+                    if (!categorieMap[categoriaNome]) {
+                        categorieMap[categoriaNome] = {
+                            descrizione: categoriaNome,
+                            articoli: []
+                        };
+                    }
+                    
+                    // Converte i valori importanti (id, prezzo, ecc.) in numeri
+                    articolo.id = parseInt(articolo.id, 10);
+                    articolo.prezzo = parseFloat(articolo.prezzo || 0); 
+                    
+                    categorieMap[categoriaNome].articoli.push(articolo);
+                }
+            });
+            
+            // Estrai l'array finale delle categorie dalla mappa
+            const data = {
+                categorie: Object.values(categorieMap)
+            };
+            
+            // -------------------------------------------------------------------
+            // Logica di Popolamento (originale)
+            // -------------------------------------------------------------------
+
+            if (data && data.categorie) {
+                categorie = data.categorie;
+                
+                for (var i = 0; i < categorie.length; i++){
+                    var categoriaNome = categorie[i].descrizione;
+                    
+                    // Popola elencoPrincipale
+                    elencoPrincipale.push(categoriaNome);
+
+                    // Popola elencoPietanze con gli articoli
+                    elencoPietanze[categoriaNome] = categorie[i].articoli || [];
+                }
+                console.log("Dati del menu caricati con successo dalla Google Sheet!");
+                
+                // CHIAMATA ALLA FUNZIONE DI AVVIO:
+                if (typeof avviaApplicazione === 'function') {
+                    avviaApplicazione();
+                }
+                
+            } else {
+                console.error("Struttura dati ricevuta dalla Google Sheet non valida o vuota.");
+            }
+        },
+        error: function(error, file) {
+            console.error("FATAL ERROR: Impossibile caricare il menu dalla Google Sheet. Errore:", error);
+        }
     });
 }
 
 // Chiamata di avvio per popolare il menu all'inizio
-popolaMenuDaJSON(); 
+popolaMenuDaCSV(); 
 
 // ----------------------------------------------------
-// CLASSE DATA E FUNZIONI DI GESTIONE COOKIE/STORAGE
+// CLASSE DATA E FUNZIONI DI GESTIONE COOKIE/STORAGE (Nessuna modifica)
 // ----------------------------------------------------
 
 function Data(){
