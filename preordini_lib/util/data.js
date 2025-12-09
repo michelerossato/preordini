@@ -1,5 +1,5 @@
 // VARIABILI GLOBALI PER IL MENU
-// Verranno popolate dalla chiamata AJAX a menu.json (ora CSV da Google Sheet)
+// Verranno popolate dalla chiamata al Foglio Google CSV
 
 var elencoPrincipale = []; // Contiene i nomi delle categorie (es. "Antipasti")
 var categorie = [];       // Contiene gli oggetti categoria completi
@@ -31,7 +31,7 @@ function popolaMenuDaCSV() {
             // Cicla tutti gli articoli ricevuti
             rawArticoli.forEach(articolo => {
                 
-                // USIAMO articolo.CAT (come da analisi del tuo file CSV)
+                // USA LA COLONNA CAT PER RAGGRUPPARE
                 const categoriaNome = articolo.CAT; 
                 
                 if (categoriaNome) { 
@@ -43,9 +43,7 @@ function popolaMenuDaCSV() {
                     }
                     
                     // Converte i valori importanti (id, prezzo, ecc.) in numeri
-                    // Nota: Assicurati che le colonne ID, CAT, e prezzo esistano nel tuo foglio Google.
                     articolo.id = parseInt(articolo.id, 10);
-                    // Rimuove eventuali valute o separatori di migliaia prima di convertire in float
                     articolo.prezzo = parseFloat(String(articolo.prezzo).replace(',', '.') || 0); 
                     
                     categorieMap[categoriaNome].articoli.push(articolo);
