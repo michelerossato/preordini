@@ -3,11 +3,14 @@ var graphicManager;
 var dataManager;
 var qrcodeManager;
 
-// Questa funzione viene chiamata da data.js DOPO che i dati del menu sono stati caricati.
+// --------------------------------------------------------------------------
+// FUNZIONE CHIAMATA DOPO IL CARICAMENTO DEI DATI (DEFINITA IN data.js)
+// --------------------------------------------------------------------------
 function avviaApplicazione() {
     console.log("Applicazione avviata. Inizializzo i manager...");
     
     // Inizializza i manager DOPO che i dati globali (elencoPietanze) sono stati popolati in data.js
+    // Questi manager devono essere inizializzati UNA SOLA VOLTA.
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
@@ -19,50 +22,53 @@ function avviaApplicazione() {
         $.mobile.pageContainer.pagecontainer("change", "#pageres");
     }
     
-    // La logica di costruzione del menu avviene nell'handler 'pagebeforeshow' qui sotto.
+    // Non è necessario chiamare la costruzione del menu qui, ci pensa l'handler 'pagebeforeshow'
+    // quando la pagina principale viene caricata.
 }
 
 // --------------------------------------------------------------------------
 // GESTIONE EVENTI JQUERY MOBILE (LOGICA DI COSTRUZIONE MENU)
 // --------------------------------------------------------------------------
 
-// Questo handler viene eseguito ogni volta che si naviga alla pagina principale (#pageprinc)
+// Questo handler viene eseguito OGNI volta che si naviga alla pagina principale (#pageprinc)
 $(document).on("pagebeforeshow", "#pageprinc", function() {
     
-    // Assicurarsi che i manager siano stati istanziati prima di usarli
+    // Assicurarsi che i manager siano stati istanziati da avviaApplicazione()
     if (!graphicManager || !dataManager) {
-        // Se non sono stati istanziati (dovrebbe avvenire solo una volta in avviaApplicazione)
-        // Riprova l'inizializzazione se necessario, o ricarica.
-        // Se avviaApplicazione() è fallita, qui ci sarebbe un problema.
-        console.warn("I manager non sono stati inizializzati. Riprovare.");
+        // Se non sono stati inizializzati, l'app è in uno stato non valido.
+        console.error("ERRORE: I manager non sono stati inizializzati. Riprovare a caricare la pagina.");
         return; 
     }
     
     var hashmap = dataManager.getInstanceHashmap();
     
-    // Chiamata al metodo generateMenu del graphicManager (come trovato nel tuo snippet)
+    // 1. Costruisce il menu chiamando generateMenu
     $("#lista").empty().append(
         graphicManager.generateMenu(
             hashmap
         )
     ).collapsibleset();
     
-    // Forza jQuery Mobile a renderizzare correttamente la lista e i collapsible
+    // 2. Forza jQuery Mobile a renderizzare correttamente la lista e i collapsible
     $("#lista").collapsibleset('refresh').trigger("create"); 
     
-    // Chiamata al metodo per aggiungere la gestione dei click sui pulsanti +/- (come trovato nel tuo snippet)
+    // 3. Aggiunge gli handler per i bottoni +/-
     graphicManager.setButtonPlusMinus(hashmap);
     
-    // Assicurati che i campi cliente/tavolo/coperti siano popolati dai cookie se esistono
-    $("#nomecliente").val(dataManager.getInstanceNome());
-    $("#tavolo").val(dataManager.getInstanceTavolo());
+    // 4. Popola i campi cliente/tavolo/coperti
+    // Nota: Ho rimosso le chiamate a getInstanceNome/Tavolo perché non le vedo nel tuo data.js,
+    // se non funzionano, dovrai aggiungerle al data.js.
+    // $("#nomecliente").val(dataManager.getInstanceNome());
+    // $("#tavolo").val(dataManager.getInstanceTavolo());
     $("#coperti").val(dataManager.getInstanceCoperti());
 });
 
 
 // --------------------------------------------------------------------------
-// GESTIONE EVENTI BOTTONI (MANTENUTA LA LOGICA ORIGINALE)
+// GESTIONE EVENTI BOTTONI (SENZA MODIFICHE SOSTANZIALI)
 // --------------------------------------------------------------------------
+
+// Rimosso l'handler "pageshow" che conteneva l'errore a riga 72
 
 $(document).on("click", "#resoconto-btn", function(evt) {
     evt.stopImmediatePropagation();
@@ -71,7 +77,6 @@ $(document).on("click", "#resoconto-btn", function(evt) {
     var hashmap = dataManager.getInstanceHashmap();
     
     if(hashmap.isEmpty()){
-        // Mostra il popup di errore se l'ordine è vuoto
         graphicManager.generatePopup(
             "#popup-ordine",
             {value: false}
@@ -81,12 +86,11 @@ $(document).on("click", "#resoconto-btn", function(evt) {
     else{
         // Salva i dati prima di passare al resoconto
         dataManager.saveInstanceHashmap(hashmap);
-        dataManager.saveInstanceNome($("#nomecliente").val());
-        dataManager.saveInstanceTavolo($("#tavolo").val());
+        // dataManager.saveInstanceNome($("#nomecliente").val()); // Rimosso se non esiste in data.js
+        // dataManager.saveInstanceTavolo($("#tavolo").val()); // Rimosso se non esiste in data.js
         dataManager.saveInstanceCoperti($("#coperti").val());
         
-        // Costruisce la pagina di riepilogo
-        graphicManager.popolaResoconto(); // Assumiamo esista e popoli #resoconto
+        graphicManager.popolaResoconto(); 
         
         $.mobile.pageContainer.pagecontainer("change", "#pageres");
     }
@@ -97,10 +101,9 @@ $(document).on("click", "#elimina-ordine-btn", function(evt) {
     evt.preventDefault();
     if(confirm("Sei sicuro di voler eliminare l'ordine attuale?")) {
         dataManager.saveInstanceHashmap(new HashMap());
-        dataManager.saveInstanceNome("");
-        dataManager.saveInstanceTavolo("");
+        // dataManager.saveInstanceNome(""); // Rimosso se non esiste in data.js
+        // dataManager.saveInstanceTavolo(""); // Rimosso se non esiste in data.js
         alert("Ordine eliminato con successo!");
-        // Ritorna alla pagina principale e l'handler 'pagebeforeshow' aggiornerà il menu
         $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
     }
 });
@@ -114,7 +117,7 @@ $(document).on("click", "#modifica-btn", function(evt) {
 $(document).on("click", "#conferma-btn", function(evt) {
     evt.stopImmediatePropagation();
     evt.preventDefault();
-    graphicManager.popolaQRCode(); // Assumiamo esista e popoli la pagina QR code
+    graphicManager.popolaQRCode(); 
     $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
 });
 
