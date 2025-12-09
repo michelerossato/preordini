@@ -1,114 +1,73 @@
-// VARIABILI GLOBALI (DA ALTRI FILES)
-// Le variabili elencoPrincipale e elencoPietanze sono popolate da data.js
-// La classe GraphicManager è definita in graphicManager.js (presumibilmente)
-var graphicManager = new GraphicManager();
-var dataManager = new Data();
-var ordineCorrente = dataManager.getInstanceHashmap();
+var dataManager;
+var graphicManager;
+var qrcodeManager;
 
-// --------------------------------------------------------------------------
-// FUNZIONE CHIAMATA DOPO IL CARICAMENTO DEI DATI (DEFINITA IN data.js)
-// --------------------------------------------------------------------------
-function avviaApplicazione() {
-    console.log("Applicazione avviata. Costruisco il menu...");
+// Questa funzione viene chiamata da data.js DOPO che i dati del menu sono stati caricati.
+function avviaApplicazione(){
+    dataManager = new Data();
+    graphicManager = new GraphicManager();
+    qrcodeManager = new QRCodeManager();
 
-    // 1. Costruisce la struttura del menu (Collapsible Set)
-    costruisciMenu();
+    // Inizializza l'interfaccia utente
+    graphicManager.inizializza();
 
-    // 2. Aggiunge i gestori di eventi
-    gestisciEventi();
-    
-    // 3. Aggiorna la pagina jQuery Mobile per visualizzare correttamente i collapsible
-    $(':mobile-pagecontainer').pagecontainer('change', '#pageprinc');
-    $('#pageprinc').trigger('create');
-}
-
-function costruisciMenu() {
-    var listaDiv = $('#lista');
-    listaDiv.empty(); // Pulisce la lista esistente
-
-    // Itera su tutte le categorie caricate da data.js
-    for (var i = 0; i < elencoPrincipale.length; i++) {
-        var categoriaNome = elencoPrincipale[i];
-        var articoli = elencoPietanze[categoriaNome];
-
-        if (articoli && articoli.length > 0) {
-            // Crea il collapsible per la categoria
-            var collapsible = $('<div data-role="collapsible"></div>');
-            var categoriaTitle = $('<h3>' + categoriaNome + '</h3>');
-            
-            // Crea la lista degli articoli all'interno del collapsible
-            var articoliList = $('<ul data-role="listview" data-inset="false"></ul>');
-            
-            // Itera su tutti gli articoli di quella categoria
-            for (var j = 0; j < articoli.length; j++) {
-                var articolo = articoli[j];
-                
-                // Crea l'elemento della lista per l'articolo
-                var listItem = $('<li></li>');
-                
-                // Formatta il prezzo per visualizzazione (es. 5.00€)
-                var prezzoFormattato = parseFloat(articolo.prezzo).toFixed(2).replace('.', ',');
-                
-                // Aggiunge il link/bottone per selezionare l'articolo
-                var itemLink = $('<a>' + 
-                                    '<h3>' + articolo.nome + '</h3>' + 
-                                    '<p><strong>' + prezzoFormattato + ' €</strong></p>' +
-                                  '</a>');
-                                  
-                // Assegna i dati dell'articolo all'elemento per usarli negli handler (vedi gestisciEventi)
-                itemLink.data('articolo', articolo);
-                
-                listItem.append(itemLink);
-                articoliList.append(listItem);
-            }
-            
-            collapsible.append(categoriaTitle);
-            collapsible.append(articoliList);
-            listaDiv.append(collapsible);
-        }
+    // Controlla se esiste un ordine in corso
+    var hashmap = dataManager.getInstanceHashmap();
+    if(hashmap.size() > 0){
+        // Se c'è un ordine, mostra subito il resoconto
+        $.mobile.changePage("#pageres");
     }
-    
-    // Aggiorna la struttura jQuery Mobile
-    listaDiv.collapsibleset('refresh');
-    listaDiv.find('ul[data-role=listview]').listview('refresh');
 }
 
+// Quando il pulsante "Vedi resoconto" viene cliccato
+$(document).on("click", "#resoconto-btn", function() {
+    graphicManager.popolaResoconto();
+    $.mobile.changePage("#pageres");
+});
 
-function gestisciEventi() {
-    
-    // Gestore per i click sugli articoli del menu
-    // NOTA: 'on' è usato per gestire eventi su elementi aggiunti dinamicamente
-    $('#lista').on('click', 'li a', function(e) {
-        e.preventDefault();
-        
-        var articoloSelezionato = $(this).data('articolo');
-        
-        // Simula l'apertura del popup ordine (la logica di gestione quantità va nel GraphicManager)
-        $('#title-popup').text(articoloSelezionato.nome);
-        $('#info-ordine-popup').html(
-            '<p>Prezzo: <strong>' + parseFloat(articoloSelezionato.prezzo).toFixed(2).replace('.', ',') + ' €</strong></p>' +
-            '<p>Qui andrebbe il selettore di quantità (es. - 1 +) e i bottoni Aggiungi/Annulla.</p>'
-        );
-        
-        $('#popup-ordine').popup('open');
-    });
+// Quando il pulsante "Elimina ordine" viene cliccato
+$(document).on("click", "#elimina-ordine-btn", function() {
+    if(confirm("Sei sicuro di voler eliminare l'ordine attuale?")) {
+        dataManager.saveInstanceHashmap(new HashMap());
+        alert("Ordine eliminato con successo!");
+        // Ricarica la pagina principale per riflettere lo stato vuoto
+        $.mobile.changePage("#pageprinc");
+        graphicManager.inizializza(); // Ricarica la lista per assicurarsi che sia aggiornata
+    }
+});
 
-    // Gestore per il bottone Vedi resoconto
-    $('#resoconto-btn').on('click', function() {
-        // La logica per mostrare il riepilogo va qui (e nel graphicManager)
-        console.log("Vedi resoconto cliccato.");
-        $.mobile.pageContainer.pagecontainer("change", "#pageres");
-    });
-    
-    // Gestore per il bottone Modifica Ordine (per tornare al menu)
-    $('#modifica-btn').on('click', function() {
-        $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
-    });
-}
+// Quando il pulsante "Modifica Ordine" viene cliccato
+$(document).on("click", "#modifica-btn", function() {
+    $.mobile.changePage("#pageprinc");
+});
 
+// Quando il pulsante "Conferma Ordine" viene cliccato
+$(document).on("click", "#conferma-btn", function() {
+    graphicManager.popolaQRCode();
+    $.mobile.changePage("#pageqrcode");
+});
 
-// NOTA: Qui dovrebbe esserci la logica per la gestione del GraphicManager e delle altre pagine, 
-// ma ai fini della visualizzazione del menu, queste funzioni sono sufficienti.
+// Quando il pulsante "Nuovo Ordine" viene cliccato (dopo aver visualizzato il QR code)
+$(document).on("click", "#nuovo-ordine-btn", function() {
+    if(confirm("Sei sicuro di voler iniziare un nuovo ordine? L'ordine precedente verrà eliminato.")) {
+        dataManager.saveInstanceHashmap(new HashMap());
+        $.mobile.changePage("#pageprinc");
+        graphicManager.inizializza(); // Ricarica la lista
+    }
+});
 
-// L'esecuzione inizia automaticamente dal data.js chiamando popolaMenuDaSheets(GOOGLE_SHEET_URL);
-// che a sua volta chiama avviaApplicazione() in caso di successo.
+// Gestione dell'incremento/decremento quantità (all'interno del popup)
+$(document).on("click", "#add-btn", function() {
+    var nomePietanza = $("#title-popup").text();
+    graphicManager.incrementaQuantita(nomePietanza);
+});
+
+$(document).on("click", "#remove-btn", function() {
+    var nomePietanza = $("#title-popup").text();
+    graphicManager.decrementaQuantita(nomePietanza);
+});
+
+// Ricarica la lista per assicurare che gli stati dei pulsanti siano aggiornati
+$(document).on("pageshow", "#pageprinc", function() {
+    graphicManager.inizializza();
+});
