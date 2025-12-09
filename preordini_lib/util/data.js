@@ -6,7 +6,7 @@ var categorie = [];       // Contiene gli oggetti categoria completi
 var elencoPietanze = {};  // Mappa gli articoli per nome categoria 
 
 // ----------------------------------------------------
-// NUOVA FUNZIONE PER IL CARICAMENTO DEI DATI DA GOOGLE SHEET CSV
+// NUOVA FUNZIONE PER IL CARICAMENTO DEI DATI DA GOOGLE SHEET  CSV
 // ----------------------------------------------------
 
 function popolaMenuDaCSV() {
