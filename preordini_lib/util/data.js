@@ -1,145 +1,54 @@
-// VARIABILI GLOBALI PER IL MENU
-// Verranno popolate dalla chiamata al Foglio Google CSV
-
-var elencoPrincipale = []; // Contiene i nomi delle categorie (es. "Antipasti")
-var categorie = [];       // Contiene gli oggetti categoria completi
-var elencoPietanze = {};  // Mappa gli articoli per nome categoria 
-
-// ----------------------------------------------------
-// NUOVA FUNZIONE PER IL CARICAMENTO DEI DATI DA GOOGLE SHEET CSV
-// ----------------------------------------------------
-
 function popolaMenuDaCSV() {
-    
-    // URL della tua Google Sheet pubblicata in formato CSV
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?output=csv';
 
-    // PapaParse recupera e analizza il CSV
+    const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?gid=0&single=true&output=csv";
+
     Papa.parse(CSV_URL, {
-        download: true, // Permette a PapaParse di scaricare l'URL
-        header: true,   // Tratta la prima riga del CSV come nomi delle colonne
-        complete: function(results) {
-            
-            // -------------------------------------------------------------------
-            // PARSING E RISTRUTTURAZIONE DEI DATI RICEVUTI
-            // -------------------------------------------------------------------
-            
-            // Filtra righe senza ID o CAT (nome della colonna della categoria)
-            const rawArticoli = results.data.filter(row => row.id && row.CAT); 
-            const categorieMap = {}; 
-            
-            // Cicla tutti gli articoli ricevuti
-            rawArticoli.forEach(articolo => {
-                
-                // USA LA COLONNA CAT PER RAGGRUPPARE
-                const categoriaNome = articolo.CAT; 
-                
-                if (categoriaNome) { 
-                    if (!categorieMap[categoriaNome]) {
-                        categorieMap[categoriaNome] = {
-                            descrizione: categoriaNome,
-                            articoli: []
-                        };
-                    }
-                    
-                    // Converte i valori importanti (id, prezzo, ecc.) in numeri
-                    articolo.id = parseInt(articolo.id, 10);
-                    articolo.prezzo = parseFloat(String(articolo.prezzo).replace(',', '.') || 0); 
-                    
-                    categorieMap[categoriaNome].articoli.push(articolo);
+        download: true,
+        header: true,
+        complete: function (results) {
+
+            const raw = results.data.filter(row => row.id && row.CAT);
+
+            const categorieMap = {};
+
+            raw.forEach(r => {
+                const cat = r.CAT;
+
+                if (!categorieMap[cat]) {
+                    categorieMap[cat] = {
+                        descrizione: cat,
+                        articoli: []
+                    };
                 }
+
+                r.id = parseInt(r.id, 10);
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+
+                categorieMap[cat].articoli.push(r);
             });
-            
-            // Estrai l'array finale delle categorie dalla mappa
-            const data = {
-                categorie: Object.values(categorieMap)
-            };
-            
-            // -------------------------------------------------------------------
-            // Logica di Popolamento (originale)
-            // -------------------------------------------------------------------
 
-            if (data && data.categorie) {
-                categorie = data.categorie;
-                
-                for (var i = 0; i < categorie.length; i++){
-                    var categoriaNome = categorie[i].descrizione;
-                    
-                    // Popola elencoPrincipale
-                    elencoPrincipale.push(categoriaNome);
+            // ARRAY finale categorie
+            categories = Object.values(categorieMap);
 
-                    // Popola elencoPietanze con gli articoli
-                    elencoPietanze[categoriaNome] = categorie[i].articoli || [];
-                }
-                console.log("Dati del menu caricati con successo dalla Google Sheet!");
-                
-                // CHIAMATA ALLA FUNZIONE DI AVVIO:
-                if (typeof avviaApplicazione === 'function') {
-                    avviaApplicazione();
-                }
-                
-            } else {
-                console.error("Struttura dati ricevuta dalla Google Sheet non valida o vuota.");
+            // POPOLA LE GLOBALI
+            elencoPrincipale = categories.map(c => c.descrizione);
+
+            elencoPietanze = {};
+            categories.forEach(c => {
+                elencoPietanze[c.descrizione] = c.articoli;
+            });
+
+            console.log("✔ Menu caricato da Google Sheet");
+
+            if (typeof avviaApplicazione === "function") {
+                avviaApplicazione();
             }
         },
-        error: function(error, file) {
-            console.error("FATAL ERROR: Impossibile caricare il menu dalla Google Sheet. Errore:", error);
+        error: function (err) {
+            console.error("Errore nel caricamento CSV:", err);
         }
     });
 }
 
-// Chiamata di avvio per popolare il menu all'inizio
-popolaMenuDaCSV(); 
-
-// ----------------------------------------------------
-// CLASSE DATA E FUNZIONI DI GESTIONE COOKIE/STORAGE (Nessuna modifica)
-// ----------------------------------------------------
-
-function Data(){
-    
-    var riferimentoHashMap = "_hashmap";
-    var riferimentoCoperti = "_coperti";
-    
-    // Funzione interna per ricreare la hashmap
-    function recreateHashmap(value){
-        var hashmap = new HashMap();
-        for(var i = 0; i < value.length; i++){
-            hashmap.put(value[i].key, value[i].val);
-        }
-        return hashmap;
-    }
-    
-    this.getInstanceHashmap = function(){
-        var hashmap = $.cookie(riferimentoHashMap);
-        if(typeof hashmap !== 'undefined' && hashmap !== null){ // esiste
-            return recreateHashmap(JSON.parse(hashmap).value);
-        }else{
-            hashmap = new HashMap();
-            this.saveInstanceHashmap(hashmap);
-            return hashmap;
-        }
-    }
-    
-    this.saveInstanceHashmap = function(hashmap){
-        $.cookie(
-            riferimentoHashMap,
-            JSON.stringify(hashmap)
-        );
-    }
-    
-    this.getInstanceCoperti = function(){
-        var coperti = $.cookie(riferimentoCoperti);
-        if(typeof coperti !== 'undefined' && coperti !== null){ // esiste
-            return parseInt(coperti);
-        }else{
-            return 1;
-        }
-    }
-    
-    this.saveInstanceCoperti = function(coperti){
-        $.cookie(
-            riferimentoCoperti,
-            coperti
-        );
-    }
-}
+popolaMenuDaCSV();
