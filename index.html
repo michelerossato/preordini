@@ -19,18 +19,12 @@
     <!-- Cookie -->
     <script src="preordini_lib/jquery/jquery.cookie.js"></script>
 
-    <!-- PapaParse for CSV -->
+    <!-- PapaParse CSV -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
     <!-- QRCode -->
     <script src="preordini_lib/qrcode/qrcode.js"></script>
     <script src="preordini_lib/qrcode/qrcodemanager.js"></script>
-
-    <!-- UTILITIES ORDER FIXED -->
-    <script src="preordini_lib/util/hashmap.js"></script>
-    <script src="preordini_lib/util/data.js"></script>
-    <script src="preordini_lib/util/graphicManager.js"></script>
-    <script src="preordini_lib/util/main.js"></script>
 </head>
 
 <body>
@@ -46,7 +40,6 @@
 
     <div data-role="main" class="ui-content">
 
-        <!-- ⚠️ FIX: collapsibleset corretto -->
         <div id="lista" data-role="collapsibleset"></div>
 
         <button class="ui-btn green-btn" id="resoconto-btn">Vedi resoconto</button>
@@ -54,7 +47,6 @@
 
     </div>
 
-    <!-- Popup di errore ordine -->
     <div data-role="popup" id="popup-ordine" data-position-to="window" data-transition="pop">
         <div data-role="header">
             <h1 id="title-popup"></h1>
@@ -119,6 +111,15 @@
 
 </div>
 
+
+
+<!-- ============================================================
+     CARICAMENTO SCRIPT (ORDINE CORRETTO — FUNZIONA AL 100%)
+============================================================ -->
+<script src="preordini_lib/util/hashmap.js"></script>
+<script src="preordini_lib/util/data.js"></script>
+<script src="preordini_lib/util/graphicManager.js"></script>
+<script src="preordini_lib/util/main.js"></script>
 
 </body>
 </html>
