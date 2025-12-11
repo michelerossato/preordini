@@ -25,13 +25,14 @@
     <!-- QRCode -->
     <script src="preordini_lib/qrcode/qrcode.js"></script>
     <script src="preordini_lib/qrcode/qrcodemanager.js"></script>
+
 </head>
 
 <body>
 
 <!-- ============================================================
      PAGINA PRINCIPALE
-============================================================ -->
+============================================================= -->
 <div data-role="page" data-theme="b" id="pageprinc">
 
     <div data-role="header">
@@ -40,7 +41,8 @@
 
     <div data-role="main" class="ui-content">
 
-        <div id="lista" data-role="collapsibleset"></div>
+        <!-- ⚠️ QUI METTIAMO LA VERSIONE CORRETTA -->
+        <div id="lista" data-role="collapsible-set"></div>
 
         <button class="ui-btn green-btn" id="resoconto-btn">Vedi resoconto</button>
         <button class="ui-btn red-btn" id="elimina-ordine-btn">Elimina ordine</button>
@@ -59,10 +61,9 @@
 </div>
 
 
-
 <!-- ============================================================
      PAGINA RESOCONTO
-============================================================ -->
+============================================================= -->
 <div data-role="page" data-theme="b" id="pageres">
 
     <div data-role="header">
@@ -70,12 +71,10 @@
     </div>
 
     <div data-role="main" class="ui-content">
-
         <div id="resoconto"></div>
 
         <button class="ui-btn red-btn" id="modifica-btn">Modifica Ordine</button>
         <button class="ui-btn green-btn" id="conferma-btn">Conferma Ordine</button>
-
     </div>
 
     <div data-role="footer">
@@ -85,10 +84,9 @@
 </div>
 
 
-
 <!-- ============================================================
      PAGINA QR CODE
-============================================================ -->
+============================================================= -->
 <div data-role="page" data-theme="b" id="pageqrcode">
 
     <div data-role="header">
@@ -112,10 +110,9 @@
 </div>
 
 
-
 <!-- ============================================================
-     CARICAMENTO SCRIPT (ORDINE CORRETTO — FUNZIONA AL 100%)
-============================================================ -->
+     SCRIPT ORDINATI CORRETTAMENTE
+============================================================= -->
 <script src="preordini_lib/util/hashmap.js"></script>
 <script src="preordini_lib/util/data.js"></script>
 <script src="preordini_lib/util/graphicManager.js"></script>
