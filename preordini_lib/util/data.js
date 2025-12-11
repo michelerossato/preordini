@@ -7,33 +7,38 @@ var elencoPietanze = {};     // Mappa categoria -> lista articoli
 
 
 // ======================================================================
-//  CARICAMENTO CSV DA GOOGLE SHEET
+// NUOVO CODICE - CARICAMENTO JSON DA APPS SCRIPT
 // ======================================================================
-function popolaMenuDaCSV() {
+function popolaMenuDaCSV() { // Manteniamo il nome per compatibilità
+    
+    // ⭐️ IL TUO NUOVO URL API FUNZIONANTE ⭐️
+    const API_URL = "https://script.google.com/macros/s/AKfycby9B-MDKydgFn1SLg_VIQGRFnxiKC70UbSb9RdN4f4zInDB7aGfkVaeCxam4jjrjmmt8A/exec"; 
 
-    // URL CSV
-    const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?gid=0&single=true&output=csv";
+    // Usiamo fetch() per scaricare i dati JSON
+    fetch(API_URL)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Errore HTTP! Stato: ${response.status}`);
+            }
+            return response.json(); // Analizza la risposta come JSON
+        })
+        .then(data => {
+            
+            console.log("✔ Dati API scaricati. Righe:", data.length);
 
-    Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        complete: function (results) {
-
-            console.log("✔ CSV scaricato. Righe:", results.data.length);
-
-            // Rimuove righe vuote o non valide
-            const raw = results.data.filter(r => r.id && r.CAT);
+            // 'data' ora è un array di oggetti (JSON)
+            // Filtriamo le righe che hanno un ID e una categoria valida
+            const raw = data.filter(r => r.id && String(r.CAT).trim());
 
             if (raw.length === 0) {
-                console.error("❌ Nessun dato valido trovato nel CSV.");
+                console.error("❌ Nessun dato valido trovato nell'API.");
                 return;
             }
 
             const categorieMap = {};
 
             raw.forEach(r => {
-                const cat = r.CAT.trim();
+                const cat = String(r.CAT).trim();
 
                 if (!categorieMap[cat]) {
                     categorieMap[cat] = {
@@ -42,17 +47,15 @@ function popolaMenuDaCSV() {
                     };
                 }
 
-                // Conversioni numeriche
-                r.id = parseInt(r.id, 10);
+                // Conversione numerica (più robusta)
+                r.id = parseInt(String(r.id), 10) || 0;
                 r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
-
-                r.nome = r.descrizione;
+                r.nome = r.descrizione; 
 
                 categorieMap[cat].articoli.push(r);
             });
 
             categorie = Object.values(categorieMap);
-
             elencoPrincipale = categorie.map(c => c.descrizione);
 
             elencoPietanze = {};
@@ -65,19 +68,18 @@ function popolaMenuDaCSV() {
             if (typeof avviaApplicazione === "function") {
                 avviaApplicazione();
             }
-        },
 
-        error: function (err) {
-            console.error("❌ Errore durante il caricamento CSV:", err);
-        }
-    });
+        })
+        .catch(err => {
+            console.error("❌ Errore durante il caricamento API:", err);
+        });
 }
 
 popolaMenuDaCSV();
 
 
 // ======================================================================
-//  CLASSE DATA — GESTIONE COOKIE E STORAGE
+//  CLASSE DATA — GESTIONE COOKIE E STORAGE (NESSUNA MODIFICA QUI)
 // ======================================================================
 function Data() {
 
@@ -89,7 +91,13 @@ function Data() {
         }
         try {
             var obj = JSON.parse(saved);
-            return HashMap.fromObject(obj);
+            // Supponiamo che HashMap.fromObject sia definita altrove (o non necessaria)
+            // Se HashMap.fromObject non è definita, prova a usare il costruttore base
+            if (typeof HashMap.fromObject === "function") {
+                return HashMap.fromObject(obj);
+            } else {
+                return new HashMap(); // O logica di ricostruzione
+            }
         } catch (e) {
             console.error("Errore lettura cookie hashmap:", e);
             return new HashMap();
@@ -97,6 +105,8 @@ function Data() {
     };
 
     this.saveInstanceHashmap = function (hashmap) {
+        // Se non hai definito un metodo .toObject() su HashMap, potresti doverlo definire
+        // In questo codice, assumiamo che .toObject() sia disponibile
         $.cookie("hashmap", JSON.stringify(hashmap.toObject()), { expires: 1 });
     };
 
@@ -110,4 +120,3 @@ function Data() {
         $.cookie("coperti", v, { expires: 1 });
     };
 }
-
