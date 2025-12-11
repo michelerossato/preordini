@@ -27,17 +27,12 @@ function avviaApplicazione() {
         var hashmap = dataManager.getInstanceHashmap();
 
         // 1. Genera menu dinamico
-        $("#lista").empty().append(
-            graphicManager.generateMenu(hashmap)
-        ).collapsibleset();
+       $("#lista").html(graphicManager.generateMenu(hashmap));
 
-        // 2. Rinfresca jQuery Mobile UI
-        $("#lista")
-            .collapsibleset("refresh")
-            .trigger("create");
+/* Ricostruisce i widget correttamente */
+$("#lista").trigger("create");
 
-        // 3. Attiva i pulsanti +/-
-        graphicManager.setButtonPlusMinus(hashmap);
+graphicManager.setButtonPlusMinus(hashmap);
 
         // 4. Coperti
         $("#coperti").val(dataManager.getInstanceCoperti());
