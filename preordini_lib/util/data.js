@@ -11,7 +11,7 @@ var elencoPietanze = {};     // Mappa categoria -> lista articoli
 // ======================================================================
 function popolaMenuDaCSV() {
 
-    // ✅ URL CSV CORRETTO
+    // URL CSV
     const CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIyRtTRCMqUH_qI4knGCE-llpqNvfKXW9xEFpa6R4unSNXqlt0zbEThuvy6ugnGTgZl_BNX067D9uy/pub?gid=0&single=true&output=csv";
 
@@ -46,16 +46,13 @@ function popolaMenuDaCSV() {
                 r.id = parseInt(r.id, 10);
                 r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
 
-                // Nome ufficiale
                 r.nome = r.descrizione;
 
                 categorieMap[cat].articoli.push(r);
             });
 
-            // Convertiamo la MAP in array
             categorie = Object.values(categorieMap);
 
-            // Popoliamo le variabili globali
             elencoPrincipale = categorie.map(c => c.descrizione);
 
             elencoPietanze = {};
@@ -65,7 +62,6 @@ function popolaMenuDaCSV() {
 
             console.log("✔ Menu caricato con successo:", elencoPrincipale);
 
-            // Avvio app solo dopo caricamento dati
             if (typeof avviaApplicazione === "function") {
                 avviaApplicazione();
             }
@@ -77,10 +73,41 @@ function popolaMenuDaCSV() {
     });
 }
 
-// Avviamo il caricamento
 popolaMenuDaCSV();
 
 
 // ======================================================================
-//  CLASSE DATA (COOKIE E STORAGE)
-// ===========================
+//  CLASSE DATA — GESTIONE COOKIE E STORAGE
+// ======================================================================
+function Data() {
+
+    // Recupera HASHMAP da cookie o crea nuovo
+    this.getInstanceHashmap = function () {
+        var saved = $.cookie("hashmap");
+        if (!saved) {
+            return new HashMap();
+        }
+        try {
+            var obj = JSON.parse(saved);
+            return HashMap.fromObject(obj);
+        } catch (e) {
+            console.error("Errore lettura cookie hashmap:", e);
+            return new HashMap();
+        }
+    };
+
+    this.saveInstanceHashmap = function (hashmap) {
+        $.cookie("hashmap", JSON.stringify(hashmap.toObject()), { expires: 1 });
+    };
+
+    // COPERTI
+    this.getInstanceCoperti = function () {
+        var c = $.cookie("coperti");
+        return c ? c : "";
+    };
+
+    this.saveInstanceCoperti = function (v) {
+        $.cookie("coperti", v, { expires: 1 });
+    };
+}
+
