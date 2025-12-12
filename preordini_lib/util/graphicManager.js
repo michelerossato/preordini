@@ -16,7 +16,7 @@ function GraphicManager() {
         // Per ogni categoria
         elencoPrincipale.forEach(cat => {
 
-            const articoli = elencoPietanze[cat];
+            const articoli = elencoPietanze[cat] || [];
 
             html += `
                 <div data-role="collapsible">
@@ -33,11 +33,11 @@ function GraphicManager() {
                         <div class="center prezzo-pietanza-ordine">${a.prezzo.toFixed(2)} €</div>
 
                         <div class="right">
-                            <button class="ui-btn brown-btn minus-btn" id="minus${a.id}">-</button>
+                            <button class="ui-btn brown-btn minus-btn" id="minus-${a.id}">-</button>
 
-                            <span id="quantita${a.id}" class="quantita-span">${quantita}</span>
+                            <span id="quantita-${a.id}" class="quantita-span">${quantita}</span>
 
-                            <button class="ui-btn brown-btn plus-btn" id="plus${a.id}">+</button>
+                            <button class="ui-btn brown-btn plus-btn" id="plus-${a.id}">+</button>
                         </div>
                         <div class="endBlock"></div>
                     </div>
@@ -60,21 +60,25 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
-            elencoPietanze[cat].forEach(p => {
+            const articoli = elencoPietanze[cat] || [];
+
+            articoli.forEach(p => {
 
                 // Bottone +
-                $(`#plus${p.id}`).off().on("click", function () {
-                    let q = parseInt($(`#quantita${p.id}`).text()) + 1;
-                    $(`#quantita${p.id}`).text(q);
+                $(`#plus-${p.id}`).off().on("click", function () {
+
+                    let q = parseInt($(`#quantita-${p.id}`).text()) + 1;
+                    $(`#quantita-${p.id}`).text(q);
 
                     hashmap.put(p.id, q);
                     dataManager.saveInstanceHashmap(hashmap);
                 });
 
                 // Bottone -
-                $(`#minus${p.id}`).off().on("click", function () {
-                    let q = Math.max(parseInt($(`#quantita${p.id}`).text()) - 1, 0);
-                    $(`#quantita${p.id}`).text(q);
+                $(`#minus-${p.id}`).off().on("click", function () {
+
+                    let q = Math.max(parseInt($(`#quantita-${p.id}`).text()) - 1, 0);
+                    $(`#quantita-${p.id}`).text(q);
 
                     if (q === 0) hashmap.remove(p.id);
                     else hashmap.put(p.id, q);
@@ -96,13 +100,11 @@ function GraphicManager() {
         let html = "";
         let hashmap = dataManager.getInstanceHashmap();
 
-        const dati = hashmap.toArray();
         let totale = 0;
-        let quantTot = 0;
 
         elencoPrincipale.forEach(cat => {
 
-            const articoli = elencoPietanze[cat].filter(x => hashmap.contains(x.id));
+            const articoli = (elencoPietanze[cat] || []).filter(x => hashmap.contains(x.id));
 
             if (articoli.length === 0) return;
 
@@ -114,7 +116,6 @@ function GraphicManager() {
                 const prezzoTot = q * p.prezzo;
 
                 totale += prezzoTot;
-                quantTot += q;
 
                 html += `
                     <div class="riga-resoconto">
