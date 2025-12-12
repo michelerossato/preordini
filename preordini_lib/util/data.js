@@ -1,37 +1,31 @@
 // ======================================================================
 //  VARIABILI GLOBALI PER MENU
 // ======================================================================
-var elencoPrincipale = [];   // Contiene i nomi delle categorie
-var categorie = [];          // Contiene gli oggetti categoria completi
-var elencoPietanze = {};     // Mappa categoria -> lista articoli
+var elencoPrincipale = [];
+var categorie = [];
+var elencoPietanze = {};
 
 
 // ======================================================================
 //  CARICAMENTO JSONP DA APPS SCRIPT (SOLUZIONE CORS)
 // ======================================================================
-function popolaMenuDaCSV() { 
-    
-    // ⭐️ URL API CORRETTO FORNITO DALL'UTENTE (DEVE FINIRE CON /exec) ⭐️
-    const API_URL = "https://script.google.com/macros/s/AKfycbyxgAC0Xd9XybJW7ezAVomR467eMUNjTMtC5btBJnjaSusO0e23pAaYFJz4TU3iOtmSHw/exec"; 
+function popolaMenuDaCSV() {
 
-    // USO DI JQUERY AJAX CON JSONP PER SUPERARE IL BLOCCO CORS
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
+
     $.ajax({
         url: API_URL,
-        dataType: 'jsonp', // ESSENZIALE per aggirare il blocco CORS
-        
+        dataType: "jsonp",
+        jsonp: "callback",     // <-- Google Apps Script vuole *esattamente* questo
+        jsonpCallback: "callback", // <-- deve combaciare con il default del tuo script
+
         success: function (data) {
 
-            console.log("✔ Dati API scaricati via JSONP. Righe:", data.length);
+            console.log("✔ Dati API caricati:", data);
 
-            const categorieMap = {};
-
-            // Filtra le righe che hanno un ID e una categoria valida
             const raw = data.filter(r => r.id && String(r.CAT).trim());
 
-            if (raw.length === 0) {
-                console.error("❌ Nessun dato valido trovato nell'API.");
-                return;
-            }
+            const categorieMap = {};
 
             raw.forEach(r => {
                 const cat = String(r.CAT).trim();
@@ -43,11 +37,9 @@ function popolaMenuDaCSV() {
                     };
                 }
 
-                // Conversione e pulizia dei dati
-                r.id = parseInt(String(r.id), 10) || 0;
-                // Sostituzione virgola con punto per la corretta lettura del decimale
-                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0; 
-                r.nome = r.descrizione; 
+                r.id = parseInt(r.id, 10) || 0;
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+                r.nome = r.descrizione;
 
                 categorieMap[cat].articoli.push(r);
             });
@@ -56,21 +48,17 @@ function popolaMenuDaCSV() {
             elencoPrincipale = categorie.map(c => c.descrizione);
 
             elencoPietanze = {};
-            categorie.forEach(c => {
-                elencoPietanze[c.descrizione] = c.articoli;
-            });
+            categorie.forEach(c => elencoPietanze[c.descrizione] = c.articoli);
 
             console.log("✔ Menu caricato con successo:", elencoPrincipale);
 
-            // Avvia il resto dell'applicazione (definito in main.js)
             if (typeof avviaApplicazione === "function") {
                 avviaApplicazione();
             }
-
         },
-        error: function (jqXHR, textStatus, errorThrown) {
-            // Qui vedrai messaggi di errore se lo script Apps Script non risponde o è disabilitato
-            console.error("❌ Errore durante il caricamento JSONP:", textStatus, errorThrown);
+
+        error: function (xhr, status, error) {
+            console.error("❌ Errore JSONP:", status, error);
         }
     });
 }
@@ -79,33 +67,32 @@ popolaMenuDaCSV();
 
 
 // ======================================================================
-//  CLASSE DATA — GESTIONE COOKIE E STORAGE
+//  CLASSE DATA
 // ======================================================================
 function Data() {
 
-    // Recupera HASHMAP da cookie o crea nuovo
     this.getInstanceHashmap = function () {
         var saved = $.cookie("hashmap");
-        if (!saved) {
-            return new HashMap();
-        }
+        if (!saved) return new HashMap();
+
         try {
             var obj = JSON.parse(saved);
-            // Assumiamo che HashMap.fromObject e HashMap.toObject siano definiti in hashmap.js
-            return typeof HashMap.fromObject === "function" ? HashMap.fromObject(obj) : new HashMap();
+            return HashMap.fromObject(obj);
         } catch (e) {
-            console.error("Errore lettura cookie hashmap:", e);
+            console.error("Errore lettura cookie:", e);
             return new HashMap();
         }
     };
 
-    this.saveInstanceHashmap = function (hashmap) {
-        if (typeof hashmap.toObject === "function") {
-            $.cookie("hashmap", JSON.stringify(hashmap.toObject()), { expires: 1 });
-        }
+    this.saveInstanceHashmap = function (map) {
+        $.cookie("hashmap", JSON.stringify(map.toObject()), { expires: 1 });
     };
 
-    // COPERTI
     this.getInstanceCoperti = function () {
-        var c = $.cookie("coperti");
-        return c ? c : "";
+        return $.cookie("coperti") || "";
+    };
+
+    this.saveInstanceCoperti = function (v) {
+        $.cookie("coperti", v, { expires: 1 });
+    };
+}
