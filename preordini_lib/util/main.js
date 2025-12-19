@@ -7,7 +7,7 @@ var qrcodeManager;
 
 
 // ======================================================================
-// FUNZIONE CHIAMATA DOPO CHE IL CSV È STATO CARICATO (data.js)
+// FUNZIONE CHIAMATA DOPO IL CARICAMENTO DEL MENU (data.js)
 // ======================================================================
 function avviaApplicazione() {
 
@@ -19,30 +19,33 @@ function avviaApplicazione() {
     qrcodeManager = new QRCodeManager();
 
     // =============================================================
-    // REGISTRA QUI gli eventi jQuery Mobile
-    // (Non prima → altrimenti partono senza i manager)
+    // PAGINA PRINCIPALE – GENERAZIONE MENU
     // =============================================================
     $(document).on("pagebeforeshow", "#pageprinc", function () {
 
         var hashmap = dataManager.getInstanceHashmap();
 
         // 1. Genera menu dinamico
-       $("#lista").html(graphicManager.generateMenu(hashmap));
+        $("#lista").empty().html(
+            graphicManager.generateMenu(hashmap)
+        );
 
-/* Ricostruisce i widget correttamente */
-$("#lista").trigger("create");
+        // 2. 🔥 FONDAMENTALE: riattiva jQuery Mobile
+        $("#lista").trigger("create");
 
-graphicManager.setButtonPlusMinus(hashmap);
+        // 3. Attiva i pulsanti + / -
+        graphicManager.setButtonPlusMinus(hashmap);
 
         // 4. Coperti
         $("#coperti").val(dataManager.getInstanceCoperti());
     });
 
     // =============================================================
-    // Se esiste già un ordine → vai al resoconto
+    // SE ESISTE GIÀ UN ORDINE → VAI AL RESOCONTO
     // =============================================================
     if (dataManager.getInstanceHashmap().size() > 0) {
-        $.mobile.pageContainer.pagecontainer("change", "#pageres");
+        $.mobile.pageContainer
+            .pagecontainer("change", "#pageres");
     }
 }
 
@@ -63,7 +66,8 @@ $(document).on("click", "#resoconto-btn", function (evt) {
         dataManager.saveInstanceCoperti($("#coperti").val());
 
         graphicManager.popolaResoconto();
-        $.mobile.pageContainer.pagecontainer("change", "#pageres");
+        $.mobile.pageContainer
+            .pagecontainer("change", "#pageres");
     }
 });
 
@@ -74,21 +78,24 @@ $(document).on("click", "#elimina-ordine-btn", function (evt) {
     if (confirm("Sei sicuro di voler eliminare l'ordine attuale?")) {
         dataManager.saveInstanceHashmap(new HashMap());
         alert("Ordine eliminato!");
-        $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+        $.mobile.pageContainer
+            .pagecontainer("change", "#pageprinc");
     }
 });
 
 
 $(document).on("click", "#modifica-btn", function (evt) {
     evt.preventDefault();
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+    $.mobile.pageContainer
+        .pagecontainer("change", "#pageprinc");
 });
 
 
 $(document).on("click", "#conferma-btn", function (evt) {
     evt.preventDefault();
     graphicManager.popolaQRCode();
-    $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
+    $.mobile.pageContainer
+        .pagecontainer("change", "#pageqrcode");
 });
 
 
@@ -97,6 +104,7 @@ $(document).on("click", "#nuovo-ordine-btn", function (evt) {
 
     if (confirm("Vuoi davvero iniziare un nuovo ordine?")) {
         dataManager.saveInstanceHashmap(new HashMap());
-        $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+        $.mobile.pageContainer
+            .pagecontainer("change", "#pageprinc");
     }
 });
