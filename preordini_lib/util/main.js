@@ -1,18 +1,33 @@
+// ======================================================================
+// MANAGER GLOBALI
+// ======================================================================
 var graphicManager;
 var dataManager;
 var qrcodeManager;
 
+
+// ======================================================================
+// AVVIO APPLICAZIONE (chiamata da data.js)
+// ======================================================================
 function avviaApplicazione() {
+
+    console.log("Applicazione avviata. Inizializzo i manager...");
 
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
 
     function costruisciMenu() {
-        const hashmap = dataManager.getInstanceHashmap();
-        $("#lista").empty().html(graphicManager.generateMenu(hashmap));
-        $("#lista").trigger("create");
+
+        var hashmap = dataManager.getInstanceHashmap();
+
+        $("#lista")
+            .empty()
+            .html(graphicManager.generateMenu(hashmap))
+            .trigger("create");
+
         graphicManager.setButtonPlusMinus(hashmap);
+
         $("#coperti").val(dataManager.getInstanceCoperti());
     }
 
@@ -21,41 +36,79 @@ function avviaApplicazione() {
 }
 
 
-// ================== BOTTONI ==================
+// ======================================================================
+// EVENTI BOTTONI
+// ======================================================================
 
-$(document).on("click", "#resoconto-btn", function (e) {
-    e.preventDefault();
+// ---------------------
+// VEDI RESOCONTO
+// ---------------------
+$(document).on("click", "#resoconto-btn", function (evt) {
+    evt.preventDefault();
 
-    const ordine = dataManager.getInstanceHashmap().toObject();
+    var hashmap = dataManager.getInstanceHashmap();
 
-    if (Object.keys(ordine).length === 0) {
+    // ✅ CONTROLLO CORRETTO
+    if (hashmap.size() === 0) {
         graphicManager.generatePopup();
         $("#popup-ordine").popup("open");
         return;
     }
 
+    dataManager.saveInstanceHashmap(hashmap);
     dataManager.saveInstanceCoperti($("#coperti").val());
+
     graphicManager.popolaResoconto();
+
     $.mobile.pageContainer.pagecontainer("change", "#pageres");
 });
 
-$(document).on("click", "#elimina-ordine-btn", function () {
-    if (!confirm("Eliminare l'ordine?")) return;
+
+// ---------------------
+// ELIMINA ORDINE
+// ---------------------
+$(document).on("click", "#elimina-ordine-btn", function (evt) {
+    evt.preventDefault();
+
+    if (!confirm("Sei sicuro di voler eliminare l'ordine attuale?")) return;
+
     dataManager.saveInstanceHashmap(new HashMap());
+    dataManager.saveInstanceCoperti("");
+
     $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
 
-$(document).on("click", "#modifica-btn", function () {
+
+// ---------------------
+// MODIFICA ORDINE
+// ---------------------
+$(document).on("click", "#modifica-btn", function (evt) {
+    evt.preventDefault();
     $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
 
-$(document).on("click", "#conferma-btn", function () {
+
+// ---------------------
+// CONFERMA ORDINE
+// ---------------------
+$(document).on("click", "#conferma-btn", function (evt) {
+    evt.preventDefault();
+
     graphicManager.popolaQRCode();
     $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
 });
 
-$(document).on("click", "#nuovo-ordine-btn", function () {
-    if (!confirm("Nuovo ordine?")) return;
+
+// ---------------------
+// NUOVO ORDINE
+// ---------------------
+$(document).on("click", "#nuovo-ordine-btn", function (evt) {
+    evt.preventDefault();
+
+    if (!confirm("Vuoi davvero iniziare un nuovo ordine?")) return;
+
     dataManager.saveInstanceHashmap(new HashMap());
+    dataManager.saveInstanceCoperti("");
+
     $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
