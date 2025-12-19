@@ -22,11 +22,11 @@ function GraphicManager() {
                     <h4>${cat}</h4>
             `;
 
-            articoli.forEach(a => {
+            articoli.forEach(p => {
 
-                const id = parseInt(a.id, 10);
-                const nome = a.descrizione || a.nome || "";
-                const prezzo = Number(a.prezzo) || 0;
+                const id = String(p.id); // 🔥 SEMPRE STRINGA
+                const nome = p.descrizione || p.nome || "";
+                const prezzo = Number(p.prezzo) || 0;
                 const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
 
                 html += `
@@ -56,7 +56,7 @@ function GraphicManager() {
 
 
     // =============================================================
-    // BOTTONI + / − (SINCRONIZZATI CON HASHMAP)
+    // BOTTONI + / −
     // =============================================================
     this.setButtonPlusMinus = function (hashmap) {
 
@@ -64,7 +64,7 @@ function GraphicManager() {
 
             (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = parseInt(p.id, 10);
+                const id = String(p.id); // 🔥 STRINGA
 
                 // +
                 $("#plus" + id).off().on("click", function () {
@@ -99,24 +99,25 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO ORDINE (QUI ERA IL PROBLEMA 2)
+    // RESOCONTO ORDINE ✅ ORA FUNZIONA
     // =============================================================
     this.popolaResoconto = function () {
 
         const hashmap = dataManager.getInstanceHashmap();
-        let html = "";
-        let totale = 0;
-        let totaleQta = 0;
 
         if (hashmap.isEmpty()) {
             $("#resoconto").html("<p>Ordine vuoto</p>");
             return;
         }
 
+        let html = "";
+        let totale = 0;
+        let totaleQta = 0;
+
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => hashmap.contains(parseInt(p.id, 10)));
+                .filter(p => hashmap.contains(String(p.id)));
 
             if (articoli.length === 0) return;
 
@@ -124,7 +125,7 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const id = parseInt(p.id, 10);
+                const id = String(p.id);
                 const q = hashmap.get(id);
                 const prezzo = Number(p.prezzo) || 0;
                 const subtot = q * prezzo;
