@@ -7,49 +7,41 @@ var qrcodeManager;
 
 
 // ======================================================================
-// FUNZIONE CHIAMATA DOPO IL CARICAMENTO DEL MENU (data.js)
+// AVVIO APPLICAZIONE (chiamata da data.js quando il menu è caricato)
 // ======================================================================
 function avviaApplicazione() {
 
     console.log("Applicazione avviata. Inizializzo i manager...");
 
-    // Inizializzazione manager (UNA SOLA VOLTA)
-    dataManager = new Data();
+    dataManager    = new Data();
     graphicManager = new GraphicManager();
-    qrcodeManager = new QRCodeManager();
+    qrcodeManager  = new QRCodeManager();
 
-    // =============================================================
-    // FUNZIONE UNICA DI COSTRUZIONE MENU
-    // =============================================================
+    // --------------------------------------------------------------
+    // COSTRUZIONE MENU (riutilizzabile)
+    // --------------------------------------------------------------
     function costruisciMenu() {
 
-        var hashmap = dataManager.getInstanceHashmap();
+        const hashmap = dataManager.getInstanceHashmap();
 
-        // Genera menu dinamico
         $("#lista")
             .empty()
-            .html(graphicManager.generateMenu(hashmap));
+            .html(graphicManager.generateMenu(hashmap))
+            .trigger("create");
 
-        // Riattiva jQuery Mobile
-        $("#lista").trigger("create");
-
-        // Attiva bottoni + / -
         graphicManager.setButtonPlusMinus(hashmap);
 
-        // Ripristina coperti
         $("#coperti").val(dataManager.getInstanceCoperti());
     }
 
-    // ✅ COSTRUZIONE IMMEDIATA (prima visualizzazione)
+    // Prima visualizzazione
     costruisciMenu();
 
-    // 🔁 Ricostruzione quando si ritorna alla pagina principale
+    // Ricostruzione quando si torna alla pagina principale
     $(document).on("pageshow", "#pageprinc", costruisciMenu);
 
-    // =============================================================
-    // SE ESISTE GIÀ UN ORDINE → VAI AL RESOCONTO
-    // =============================================================
-    if (dataManager.getInstanceHashmap().size() > 0) {
+    // Se esiste già un ordine → vai al resoconto
+    if (!dataManager.getInstanceHashmap().isEmpty()) {
         $.mobile.pageContainer.pagecontainer("change", "#pageres");
     }
 }
@@ -59,16 +51,18 @@ function avviaApplicazione() {
 // EVENTI BOTTONI
 // ======================================================================
 
-// ---------------------
+// ----------------------------------------------------------------------
 // VEDI RESOCONTO
-// ---------------------
+// ----------------------------------------------------------------------
 $(document).on("click", "#resoconto-btn", function (evt) {
     evt.preventDefault();
 
-    var hashmap = dataManager.getInstanceHashmap();
+    const hashmap = dataManager.getInstanceHashmap();
+
+    console.log("HASHMAP AL RESOCONTO:", hashmap.toObject());
 
     if (hashmap.isEmpty()) {
-        graphicManager.generatePopup("#popup-ordine", { value: false });
+        graphicManager.generatePopup();
         $("#popup-ordine").popup("open");
         return;
     }
@@ -77,13 +71,14 @@ $(document).on("click", "#resoconto-btn", function (evt) {
     dataManager.saveInstanceCoperti($("#coperti").val());
 
     graphicManager.popolaResoconto();
+
     $.mobile.pageContainer.pagecontainer("change", "#pageres");
 });
 
 
-// ---------------------
+// ----------------------------------------------------------------------
 // ELIMINA ORDINE
-// ---------------------
+// ----------------------------------------------------------------------
 $(document).on("click", "#elimina-ordine-btn", function (evt) {
     evt.preventDefault();
 
@@ -96,28 +91,30 @@ $(document).on("click", "#elimina-ordine-btn", function (evt) {
 });
 
 
-// ---------------------
+// ----------------------------------------------------------------------
 // MODIFICA ORDINE
-// ---------------------
+// ----------------------------------------------------------------------
 $(document).on("click", "#modifica-btn", function (evt) {
     evt.preventDefault();
     $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
 
 
-// ---------------------
-// CONFERMA ORDINE → QR
-// ---------------------
+// ----------------------------------------------------------------------
+// CONFERMA ORDINE → QR CODE
+// ----------------------------------------------------------------------
 $(document).on("click", "#conferma-btn", function (evt) {
     evt.preventDefault();
+
     graphicManager.popolaQRCode();
+
     $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
 });
 
 
-// ---------------------
+// ----------------------------------------------------------------------
 // NUOVO ORDINE
-// ---------------------
+// ----------------------------------------------------------------------
 $(document).on("click", "#nuovo-ordine-btn", function (evt) {
     evt.preventDefault();
 
@@ -128,4 +125,3 @@ $(document).on("click", "#nuovo-ordine-btn", function (evt) {
 
     $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
-
