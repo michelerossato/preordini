@@ -1,7 +1,7 @@
 function GraphicManager() {
 
     // =============================================================
-    // GENERA MENU PRINCIPALE
+    // GENERA MENU
     // =============================================================
     this.generateMenu = function (hashmap) {
 
@@ -24,25 +24,22 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const id = String(p.id);
-                const nome = p.descrizione || p.nome || "";
+                const id = String(p.id);          // 🔥 STRINGA OVUNQUE
+                const nome = p.descrizione || "";
                 const prezzo = Number(p.prezzo) || 0;
-                const quantita = hashmap.toObject()[id] || 0;
+                const qta = hashmap.get(id) || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
                         <div class="left nome-pietanza">${nome}</div>
-
                         <div class="center prezzo-pietanza-ordine">
                             ${prezzo.toFixed(2)} €
                         </div>
-
                         <div class="right controlli">
-                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
-                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
-                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
+                            <button class="ui-btn minus-btn" id="minus${id}">−</button>
+                            <span id="quantita${id}">${qta}</span>
+                            <button class="ui-btn plus-btn" id="plus${id}">+</button>
                         </div>
-
                         <div class="endBlock"></div>
                     </div>
                 `;
@@ -56,7 +53,7 @@ function GraphicManager() {
 
 
     // =============================================================
-    // BOTTONI + / −
+    // BOTTONI + / -
     // =============================================================
     this.setButtonPlusMinus = function (hashmap) {
 
@@ -67,19 +64,16 @@ function GraphicManager() {
                 const id = String(p.id);
 
                 $("#plus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    let q = hashmap.get(id) || 0;
                     q++;
-
-                    $("#quantita" + id).text(q);
                     hashmap.put(id, q);
+                    $("#quantita" + id).text(q);
                     dataManager.saveInstanceHashmap(hashmap);
                 });
 
                 $("#minus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    let q = hashmap.get(id) || 0;
                     q = Math.max(q - 1, 0);
-
-                    $("#quantita" + id).text(q);
 
                     if (q === 0) {
                         hashmap.remove(id);
@@ -87,6 +81,7 @@ function GraphicManager() {
                         hashmap.put(id, q);
                     }
 
+                    $("#quantita" + id).text(q);
                     dataManager.saveInstanceHashmap(hashmap);
                 });
             });
@@ -95,14 +90,14 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO ORDINE (FIX DEFINITIVO)
+    // RESOCONTO (QUI ERA IL BUG)
     // =============================================================
     this.popolaResoconto = function () {
 
         const hashmap = dataManager.getInstanceHashmap();
-        const ordine = hashmap.toObject();
 
-        if (Object.keys(ordine).length === 0) {
+        // ✅ CONTROLLO CORRETTO
+        if (hashmap.size() === 0) {
             $("#resoconto").html("<p>Ordine vuoto</p>");
             return;
         }
@@ -114,16 +109,16 @@ function GraphicManager() {
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => ordine[String(p.id)]);
+                .filter(p => hashmap.contains(String(p.id)));
 
-            if (articoli.length === 0) return;
+            if (!articoli.length) return;
 
             html += `<h3>${cat}</h3>`;
 
             articoli.forEach(p => {
 
                 const id = String(p.id);
-                const q = ordine[id];
+                const q = hashmap.get(id);
                 const prezzo = Number(p.prezzo) || 0;
                 const subtot = q * prezzo;
 
@@ -147,7 +142,6 @@ function GraphicManager() {
                 <div class="left"><strong>Totale</strong></div>
                 <div class="center"><strong>${totaleQta}</strong></div>
                 <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
-                <div class="endBlock"></div>
             </div>
         `;
 
@@ -160,29 +154,13 @@ function GraphicManager() {
     // =============================================================
     this.popolaQRCode = function () {
 
-        const ordine = dataManager.getInstanceHashmap().toObject();
+        const obj = dataManager.getInstanceHashmap().toObject();
         $("#qrcode").empty();
 
         new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(ordine),
+            text: JSON.stringify(obj),
             width: 256,
             height: 256
-        });
-    };
-
-
-    // =============================================================
-    // POPUP ORDINE VUOTO
-    // =============================================================
-    this.generatePopup = function () {
-
-        $("#info-ordine-popup").html(`
-            <p>Il tuo ordine è vuoto.</p>
-            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
-        `);
-
-        $("#ok-popup-btn").off().on("click", function () {
-            $("#popup-ordine").popup("close");
         });
     };
 }
