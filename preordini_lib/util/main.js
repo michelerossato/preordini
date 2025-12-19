@@ -10,38 +10,52 @@ function avviaApplicazione() {
 
     function costruisciMenu() {
         const hashmap = dataManager.getInstanceHashmap();
-
-        $("#lista")
-            .empty()
-            .html(graphicManager.generateMenu(hashmap))
-            .trigger("create");
-
+        $("#lista").empty().html(graphicManager.generateMenu(hashmap));
+        $("#lista").trigger("create");
         graphicManager.setButtonPlusMinus(hashmap);
         $("#coperti").val(dataManager.getInstanceCoperti());
     }
 
-    $(document).on("pageshow", "#pageprinc", costruisciMenu);
     costruisciMenu();
+    $(document).on("pageshow", "#pageprinc", costruisciMenu);
 }
 
 
-// -------------------
-// RESOCONTO
-// -------------------
+// ================== BOTTONI ==================
+
 $(document).on("click", "#resoconto-btn", function (e) {
     e.preventDefault();
 
-    const hashmap = dataManager.getInstanceHashmap();
+    const ordine = dataManager.getInstanceHashmap().toObject();
 
-    // ✅ CONTROLLO GIUSTO
-    if (hashmap.size() === 0) {
+    if (Object.keys(ordine).length === 0) {
+        graphicManager.generatePopup();
         $("#popup-ordine").popup("open");
         return;
     }
 
-    dataManager.saveInstanceHashmap(hashmap);
     dataManager.saveInstanceCoperti($("#coperti").val());
-
     graphicManager.popolaResoconto();
     $.mobile.pageContainer.pagecontainer("change", "#pageres");
+});
+
+$(document).on("click", "#elimina-ordine-btn", function () {
+    if (!confirm("Eliminare l'ordine?")) return;
+    dataManager.saveInstanceHashmap(new HashMap());
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+});
+
+$(document).on("click", "#modifica-btn", function () {
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+});
+
+$(document).on("click", "#conferma-btn", function () {
+    graphicManager.popolaQRCode();
+    $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
+});
+
+$(document).on("click", "#nuovo-ordine-btn", function () {
+    if (!confirm("Nuovo ordine?")) return;
+    dataManager.saveInstanceHashmap(new HashMap());
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
