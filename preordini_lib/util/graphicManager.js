@@ -13,7 +13,6 @@ function GraphicManager() {
             </div>
         `;
 
-        // Categorie
         elencoPrincipale.forEach(cat => {
 
             const articoli = elencoPietanze[cat] || [];
@@ -25,9 +24,9 @@ function GraphicManager() {
 
             articoli.forEach(a => {
 
-                const id = a.id;
+                const id = parseInt(a.id, 10);
                 const nome = a.descrizione || a.nome || "";
-                const prezzo = parseFloat(a.prezzo) || 0;
+                const prezzo = Number(a.prezzo) || 0;
                 const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
 
                 html += `
@@ -57,21 +56,20 @@ function GraphicManager() {
 
 
     // =============================================================
-    // BOTTONI + / −
+    // BOTTONI + / − (SINCRONIZZATI CON HASHMAP)
     // =============================================================
     this.setButtonPlusMinus = function (hashmap) {
 
         elencoPrincipale.forEach(cat => {
 
-            const articoli = elencoPietanze[cat] || [];
+            (elencoPietanze[cat] || []).forEach(p => {
 
-            articoli.forEach(p => {
-
-                const id = p.id;
+                const id = parseInt(p.id, 10);
 
                 // +
                 $("#plus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text()) || 0;
+
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
                     q++;
 
                     $("#quantita" + id).text(q);
@@ -81,7 +79,8 @@ function GraphicManager() {
 
                 // −
                 $("#minus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text()) || 0;
+
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
                     q = Math.max(q - 1, 0);
 
                     $("#quantita" + id).text(q);
@@ -94,15 +93,13 @@ function GraphicManager() {
 
                     dataManager.saveInstanceHashmap(hashmap);
                 });
-
             });
-
         });
     };
 
 
     // =============================================================
-    // RESOCONTO ORDINE
+    // RESOCONTO ORDINE (QUI ERA IL PROBLEMA 2)
     // =============================================================
     this.popolaResoconto = function () {
 
@@ -111,10 +108,15 @@ function GraphicManager() {
         let totale = 0;
         let totaleQta = 0;
 
+        if (hashmap.isEmpty()) {
+            $("#resoconto").html("<p>Ordine vuoto</p>");
+            return;
+        }
+
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => hashmap.contains(p.id));
+                .filter(p => hashmap.contains(parseInt(p.id, 10)));
 
             if (articoli.length === 0) return;
 
@@ -122,8 +124,9 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const q = hashmap.get(p.id);
-                const prezzo = parseFloat(p.prezzo) || 0;
+                const id = parseInt(p.id, 10);
+                const q = hashmap.get(id);
+                const prezzo = Number(p.prezzo) || 0;
                 const subtot = q * prezzo;
 
                 totale += subtot;
@@ -138,7 +141,6 @@ function GraphicManager() {
                     </div>
                 `;
             });
-
         });
 
         html += `
@@ -161,7 +163,6 @@ function GraphicManager() {
     this.popolaQRCode = function () {
 
         const hash = dataManager.getInstanceHashmap().toObject();
-
         $("#qrcode").empty();
 
         new QRCode(document.getElementById("qrcode"), {
@@ -186,5 +187,4 @@ function GraphicManager() {
             $("#popup-ordine").popup("close");
         });
     };
-
 }
