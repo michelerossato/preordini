@@ -24,10 +24,10 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const id = String(p.id); // 🔥 SEMPRE STRINGA
+                const id = String(p.id);
                 const nome = p.descrizione || p.nome || "";
                 const prezzo = Number(p.prezzo) || 0;
-                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
+                const quantita = hashmap.toObject()[id] || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
@@ -64,11 +64,9 @@ function GraphicManager() {
 
             (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = String(p.id); // 🔥 STRINGA
+                const id = String(p.id);
 
-                // +
                 $("#plus" + id).off().on("click", function () {
-
                     let q = parseInt($("#quantita" + id).text(), 10) || 0;
                     q++;
 
@@ -77,9 +75,7 @@ function GraphicManager() {
                     dataManager.saveInstanceHashmap(hashmap);
                 });
 
-                // −
                 $("#minus" + id).off().on("click", function () {
-
                     let q = parseInt($("#quantita" + id).text(), 10) || 0;
                     q = Math.max(q - 1, 0);
 
@@ -99,13 +95,14 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO ORDINE ✅ ORA FUNZIONA
+    // RESOCONTO ORDINE (FIX DEFINITIVO)
     // =============================================================
     this.popolaResoconto = function () {
 
         const hashmap = dataManager.getInstanceHashmap();
+        const ordine = hashmap.toObject();
 
-        if (hashmap.isEmpty()) {
+        if (Object.keys(ordine).length === 0) {
             $("#resoconto").html("<p>Ordine vuoto</p>");
             return;
         }
@@ -117,7 +114,7 @@ function GraphicManager() {
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => hashmap.contains(String(p.id)));
+                .filter(p => ordine[String(p.id)]);
 
             if (articoli.length === 0) return;
 
@@ -126,7 +123,7 @@ function GraphicManager() {
             articoli.forEach(p => {
 
                 const id = String(p.id);
-                const q = hashmap.get(id);
+                const q = ordine[id];
                 const prezzo = Number(p.prezzo) || 0;
                 const subtot = q * prezzo;
 
@@ -163,11 +160,11 @@ function GraphicManager() {
     // =============================================================
     this.popolaQRCode = function () {
 
-        const hash = dataManager.getInstanceHashmap().toObject();
+        const ordine = dataManager.getInstanceHashmap().toObject();
         $("#qrcode").empty();
 
         new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(hash),
+            text: JSON.stringify(ordine),
             width: 256,
             height: 256
         });
