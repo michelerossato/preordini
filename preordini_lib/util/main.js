@@ -1,52 +1,47 @@
 // ======================================================================
 // MANAGER GLOBALI
 // ======================================================================
-var graphicManager = null;
-var dataManager = null;
-var qrcodeManager = null;
+var graphicManager;
+var dataManager;
+var qrcodeManager;
 
 
 // ======================================================================
-// PAGE CREATE – UNA SOLA VOLTA
+// AVVIO APPLICAZIONE (CHIAMATA DOPO CARICAMENTO DATI)
 // ======================================================================
-$(document).on("pagecreate", "#pageprinc", function () {
+function avviaApplicazione() {
 
-    console.log("✔ pagecreate pageprinc");
+    console.log("🚀 Avvio applicazione");
 
-    if (!dataManager) {
-        dataManager = new Data();
-        graphicManager = new GraphicManager();
-        qrcodeManager = new QRCodeManager();
+    dataManager = new Data();
+    graphicManager = new GraphicManager();
+    qrcodeManager = new QRCodeManager();
+
+    // --------------------------------------------------
+    // FUNZIONE UNICA PER COSTRUIRE IL MENU
+    // --------------------------------------------------
+    function costruisciMenu() {
+
+        console.log("🍽️ Costruzione menu");
+
+        const hashmap = dataManager.getInstanceHashmap();
+
+        $("#lista")
+            .empty()
+            .html(graphicManager.generateMenu(hashmap))
+            .trigger("create");
+
+        graphicManager.setButtonPlusMinus(hashmap);
+
+        $("#coperti").val(dataManager.getInstanceCoperti());
     }
-});
 
+    // 👉 COSTRUZIONE INIZIALE
+    costruisciMenu();
 
-// ======================================================================
-// PAGE SHOW – OGNI VOLTA CHE LA PAGINA È VISIBILE
-// ======================================================================
-$(document).on("pageshow", "#pageprinc", function () {
-
-    console.log("✔ pageshow pageprinc");
-
-    if (!dataManager || !graphicManager) {
-        console.error("Manager non inizializzati");
-        return;
-    }
-
-    const hashmap = dataManager.getInstanceHashmap();
-
-    // Costruzione menu
-    $("#lista")
-        .empty()
-        .html(graphicManager.generateMenu(hashmap))
-        .trigger("create");
-
-    // Attiva + e -
-    graphicManager.setButtonPlusMinus(hashmap);
-
-    // Ripristina coperti
-    $("#coperti").val(dataManager.getInstanceCoperti());
-});
+    // 👉 OGNI VOLTA CHE TORNI ALLA PAGINA
+    $(document).on("pageshow", "#pageprinc", costruisciMenu);
+}
 
 
 // ======================================================================
@@ -72,7 +67,7 @@ $(document).on("click", "#resoconto-btn", function (e) {
 
 
 // ======================================================================
-// TORNA A MODIFICA ORDINE
+// MODIFICA ORDINE
 // ======================================================================
 $(document).on("click", "#modifica-btn", function (e) {
     e.preventDefault();
@@ -96,7 +91,7 @@ $(document).on("click", "#elimina-ordine-btn", function (e) {
 
 
 // ======================================================================
-// CONFERMA → QR CODE
+// CONFERMA → QR
 // ======================================================================
 $(document).on("click", "#conferma-btn", function (e) {
     e.preventDefault();
