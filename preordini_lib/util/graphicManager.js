@@ -1,7 +1,7 @@
 function GraphicManager() {
 
     // =============================================================
-    // GENERA MENU
+    // MENU PRINCIPALE
     // =============================================================
     this.generateMenu = function (ordine) {
 
@@ -15,25 +15,21 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
-            const articoli = elencoPietanze[cat] || [];
-
             html += `<div data-role="collapsible"><h4>${cat}</h4>`;
 
-            articoli.forEach(p => {
+            (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = String(p.id);
-                const nome = p.descrizione || p.nome || "";
-                const prezzo = Number(p.prezzo) || 0;
-                const qta = ordine[id] || 0;
+                const id = p.id;
+                const q = ordine[id] || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
-                        <div class="left nome-pietanza">${nome}</div>
-                        <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
+                        <div class="left nome-pietanza">${p.descrizione}</div>
+                        <div class="center prezzo-pietanza-ordine">${p.prezzo.toFixed(2)} €</div>
                         <div class="right controlli">
-                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
-                            <span id="quantita${id}" class="quantita-span">${qta}</span>
-                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
+                            <button class="ui-btn brown-btn minus-btn" data-id="${id}">−</button>
+                            <span class="quantita-span" id="q_${id}">${q}</span>
+                            <button class="ui-btn brown-btn plus-btn" data-id="${id}">+</button>
                         </div>
                         <div class="endBlock"></div>
                     </div>
@@ -48,30 +44,25 @@ function GraphicManager() {
 
 
     // =============================================================
-    // BOTTONI + / −
+    // BOTTONI + / -
     // =============================================================
     this.setButtonPlusMinus = function (ordine) {
 
-        elencoPrincipale.forEach(cat => {
-            (elencoPietanze[cat] || []).forEach(p => {
+        $(".plus-btn").off().on("click", function () {
+            const id = $(this).data("id");
+            ordine[id] = (ordine[id] || 0) + 1;
+            $("#q_" + id).text(ordine[id]);
+            dataManager.saveInstanceOrdine(ordine);
+        });
 
-                const id = String(p.id);
+        $(".minus-btn").off().on("click", function () {
+            const id = $(this).data("id");
+            ordine[id] = Math.max((ordine[id] || 0) - 1, 0);
 
-                $("#plus" + id).off().on("click", function () {
-                    ordine[id] = (ordine[id] || 0) + 1;
-                    $("#quantita" + id).text(ordine[id]);
-                    dataManager.saveInstanceHashmap(ordine);
-                });
+            if (ordine[id] === 0) delete ordine[id];
 
-                $("#minus" + id).off().on("click", function () {
-                    ordine[id] = Math.max((ordine[id] || 0) - 1, 0);
-
-                    if (ordine[id] === 0) delete ordine[id];
-
-                    $("#quantita" + id).text(ordine[id] || 0);
-                    dataManager.saveInstanceHashmap(ordine);
-                });
-            });
+            $("#q_" + id).text(ordine[id] || 0);
+            dataManager.saveInstanceOrdine(ordine);
         });
     };
 
@@ -81,32 +72,28 @@ function GraphicManager() {
     // =============================================================
     this.popolaResoconto = function () {
 
-        const ordine = dataManager.getInstanceHashmap();
+        const ordine = dataManager.getInstanceOrdine();
+        let html = "";
+        let totale = 0;
+        let totaleQta = 0;
 
         if (Object.keys(ordine).length === 0) {
             $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
             return;
         }
 
-        let html = "";
-        let totale = 0;
-        let totaleQta = 0;
-
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => ordine[String(p.id)] !== undefined);
+                .filter(p => ordine[p.id]);
 
             if (!articoli.length) return;
 
             html += `<h3>${cat}</h3>`;
 
             articoli.forEach(p => {
-
-                const id = String(p.id);
-                const q = ordine[id];
-                const prezzo = Number(p.prezzo) || 0;
-                const subtot = q * prezzo;
+                const q = ordine[p.id];
+                const subtot = q * p.prezzo;
 
                 totale += subtot;
                 totaleQta += q;
@@ -128,37 +115,9 @@ function GraphicManager() {
                 <div class="left"><strong>Totale</strong></div>
                 <div class="center"><strong>${totaleQta}</strong></div>
                 <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
-                <div class="endBlock"></div>
             </div>
         `;
 
         $("#resoconto").html(html);
-    };
-
-
-    // =============================================================
-    // QR CODE
-    // =============================================================
-    this.popolaQRCode = function () {
-        $("#qrcode").empty();
-        new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(dataManager.getInstanceHashmap()),
-            width: 256,
-            height: 256
-        });
-    };
-
-
-    // =============================================================
-    // POPUP
-    // =============================================================
-    this.generatePopup = function () {
-        $("#info-ordine-popup").html(`
-            <p>Il tuo ordine è vuoto.</p>
-            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
-        `);
-        $("#ok-popup-btn").off().on("click", () => {
-            $("#popup-ordine").popup("close");
-        });
     };
 }
