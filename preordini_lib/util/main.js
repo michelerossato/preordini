@@ -1,44 +1,40 @@
 // ======================================================================
 // MANAGER GLOBALI
 // ======================================================================
-var graphicManager = null;
-var dataManager = null;
-var qrcodeManager = null;
+var graphicManager;
+var dataManager;
+var qrcodeManager;
+var appAvviata = false;
 
 
 // ======================================================================
-// INIZIALIZZAZIONE APP (UNA SOLA VOLTA)
+// AVVIO APPLICAZIONE (UNA SOLA VOLTA)
 // ======================================================================
-$(document).on("mobileinit", function () {
-    // niente qui, serve solo a garantire ordine di caricamento
-});
+function avviaApplicazione() {
 
+    if (appAvviata) return;
+    appAvviata = true;
 
-// ======================================================================
-// PAGE CREATE – viene eseguito UNA SOLA VOLTA
-// ======================================================================
-$(document).on("pagecreate", "#pageprinc", function () {
+    console.log("Applicazione avviata");
 
-    console.log("Pagecreate pageprinc");
-
-    if (!dataManager) {
-        dataManager = new Data();
-        graphicManager = new GraphicManager();
-        qrcodeManager = new QRCodeManager();
-    }
-});
+    dataManager = new Data();
+    graphicManager = new GraphicManager();
+    qrcodeManager = new QRCodeManager();
+}
 
 
 // ======================================================================
-// PAGE SHOW – OGNI VOLTA CHE TORNI ALLA PAGINA
+// PAGINA PRINCIPALE – OGNI VOLTA CHE SI MOSTRA
 // ======================================================================
 $(document).on("pageshow", "#pageprinc", function () {
+
+    avviaApplicazione();
 
     console.log("Pageshow pageprinc");
 
     const hashmap = dataManager.getInstanceHashmap();
 
-    // Costruzione menu
+    // Costruisci menu
     $("#lista")
         .empty()
         .html(graphicManager.generateMenu(hashmap))
@@ -70,7 +66,6 @@ $(document).on("click", "#resoconto-btn", function (e) {
     dataManager.saveInstanceCoperti($("#coperti").val());
 
     graphicManager.popolaResoconto();
-
     $.mobile.pageContainer.pagecontainer("change", "#pageres");
 });
 
