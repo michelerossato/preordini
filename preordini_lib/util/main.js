@@ -1,49 +1,45 @@
-// ======================================================================
+c// ======================================================================
 // MANAGER GLOBALI
 // ======================================================================
 var graphicManager;
 var dataManager;
 var qrcodeManager;
-var appAvviata = false;
 
 
 // ======================================================================
-// AVVIO APPLICAZIONE (UNA SOLA VOLTA)
+// PAGECREATE – una sola volta
 // ======================================================================
-function avviaApplicazione() {
+$(document).on("pagecreate", "#pageprinc", function () {
 
-    if (appAvviata) return;
-    appAvviata = true;
-
-    console.log("Applicazione avviata");
+    console.log("pagecreate pageprinc");
 
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
-}
+});
 
 
 // ======================================================================
-// PAGINA PRINCIPALE – OGNI VOLTA CHE SI MOSTRA
+// PAGESHOW – ogni volta che la pagina appare
 // ======================================================================
 $(document).on("pageshow", "#pageprinc", function () {
 
-    avviaApplicazione();
-
-    console.log("Pageshow pageprinc");
+    console.log("pageshow pageprinc");
 
     const hashmap = dataManager.getInstanceHashmap();
 
-    // Costruisci menu
-    $("#lista")
-        .empty()
-        .html(graphicManager.generateMenu(hashmap))
-        .trigger("create");
+    // 🔥 COSTRUZIONE MENU
+    const html = graphicManager.generateMenu(hashmap);
 
-    // Attiva + e -
+    $("#lista").empty().html(html);
+
+    // 🔥 jQuery Mobile refresh
+    $("#pageprinc").trigger("create");
+
+    // 🔥 Attiva + e −
     graphicManager.setButtonPlusMinus(hashmap);
 
-    // Ripristina coperti
+    // Coperti
     $("#coperti").val(dataManager.getInstanceCoperti());
 });
 
@@ -71,7 +67,7 @@ $(document).on("click", "#resoconto-btn", function (e) {
 
 
 // ======================================================================
-// TORNA A MODIFICA ORDINE
+// TORNA A MODIFICA
 // ======================================================================
 $(document).on("click", "#modifica-btn", function (e) {
     e.preventDefault();
@@ -95,7 +91,7 @@ $(document).on("click", "#elimina-ordine-btn", function (e) {
 
 
 // ======================================================================
-// CONFERMA → QR CODE
+// CONFERMA → QR
 // ======================================================================
 $(document).on("click", "#conferma-btn", function (e) {
     e.preventDefault();
