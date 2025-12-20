@@ -7,22 +7,19 @@ var qrcodeManager;
 
 
 // ======================================================================
-// CHIAMATA DOPO CARICAMENTO JSONP (data.js)
+// AVVIO APPLICAZIONE (chiamata da data.js)
 // ======================================================================
 function avviaApplicazione() {
 
-    console.log("✅ avviaApplicazione: menu pronto");
+    console.log("Applicazione avviata. Inizializzo i manager...");
 
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
 
-    // =============================================================
-    // COSTRUZIONE MENU (UNA SOLA FUNZIONE)
-    // =============================================================
     function costruisciMenu() {
 
-        const hashmap = dataManager.getInstanceHashmap();
+        var hashmap = dataManager.getInstanceHashmap();
 
         $("#lista")
             .empty()
@@ -34,28 +31,25 @@ function avviaApplicazione() {
         $("#coperti").val(dataManager.getInstanceCoperti());
     }
 
-    // prima costruzione
     costruisciMenu();
-
-    // ricostruzione quando torni alla pagina
     $(document).on("pageshow", "#pageprinc", costruisciMenu);
-
-    // se c’è già un ordine → vai al resoconto
-    if (!dataManager.getInstanceHashmap().isEmpty()) {
-        $.mobile.pageContainer.pagecontainer("change", "#pageres");
-    }
 }
 
 
 // ======================================================================
-// VEDI RESOCONTO
+// EVENTI BOTTONI
 // ======================================================================
-$(document).on("click", "#resoconto-btn", function (e) {
-    e.preventDefault();
 
-    const hashmap = dataManager.getInstanceHashmap();
+// ---------------------
+// VEDI RESOCONTO
+// ---------------------
+$(document).on("click", "#resoconto-btn", function (evt) {
+    evt.preventDefault();
 
-    if (hashmap.isEmpty()) {
+    var hashmap = dataManager.getInstanceHashmap();
+
+    // ✅ CONTROLLO CORRETTO
+    if (hashmap.size() === 0) {
         graphicManager.generatePopup();
         $("#popup-ordine").popup("open");
         return;
@@ -65,26 +59,18 @@ $(document).on("click", "#resoconto-btn", function (e) {
     dataManager.saveInstanceCoperti($("#coperti").val());
 
     graphicManager.popolaResoconto();
+
     $.mobile.pageContainer.pagecontainer("change", "#pageres");
 });
 
 
-// ======================================================================
-// MODIFICA ORDINE
-// ======================================================================
-$(document).on("click", "#modifica-btn", function (e) {
-    e.preventDefault();
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
-});
-
-
-// ======================================================================
+// ---------------------
 // ELIMINA ORDINE
-// ======================================================================
-$(document).on("click", "#elimina-ordine-btn", function (e) {
-    e.preventDefault();
+// ---------------------
+$(document).on("click", "#elimina-ordine-btn", function (evt) {
+    evt.preventDefault();
 
-    if (!confirm("Sei sicuro di voler eliminare l'ordine?")) return;
+    if (!confirm("Sei sicuro di voler eliminare l'ordine attuale?")) return;
 
     dataManager.saveInstanceHashmap(new HashMap());
     dataManager.saveInstanceCoperti("");
@@ -93,24 +79,33 @@ $(document).on("click", "#elimina-ordine-btn", function (e) {
 });
 
 
-// ======================================================================
-// CONFERMA → QR
-// ======================================================================
-$(document).on("click", "#conferma-btn", function (e) {
-    e.preventDefault();
+// ---------------------
+// MODIFICA ORDINE
+// ---------------------
+$(document).on("click", "#modifica-btn", function (evt) {
+    evt.preventDefault();
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+});
+
+
+// ---------------------
+// CONFERMA ORDINE
+// ---------------------
+$(document).on("click", "#conferma-btn", function (evt) {
+    evt.preventDefault();
 
     graphicManager.popolaQRCode();
     $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
 });
 
 
-// ======================================================================
+// ---------------------
 // NUOVO ORDINE
-// ======================================================================
-$(document).on("click", "#nuovo-ordine-btn", function (e) {
-    e.preventDefault();
+// ---------------------
+$(document).on("click", "#nuovo-ordine-btn", function (evt) {
+    evt.preventDefault();
 
-    if (!confirm("Vuoi iniziare un nuovo ordine?")) return;
+    if (!confirm("Vuoi davvero iniziare un nuovo ordine?")) return;
 
     dataManager.saveInstanceHashmap(new HashMap());
     dataManager.saveInstanceCoperti("");
