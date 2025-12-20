@@ -3,7 +3,7 @@ function GraphicManager() {
     // =============================================================
     // GENERA MENU
     // =============================================================
-    this.generateMenu = function (hashmap) {
+    this.generateMenu = function (ordine) {
 
         let html = `
             <div class="form-ordine">
@@ -21,10 +21,10 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const id = String(p.id);   // 🔥 SEMPRE STRINGA
+                const id = String(p.id);
                 const nome = p.descrizione || p.nome || "";
                 const prezzo = Number(p.prezzo) || 0;
-                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
+                const qta = ordine[id] || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
@@ -32,7 +32,7 @@ function GraphicManager() {
                         <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
                         <div class="right controlli">
                             <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
-                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
+                            <span id="quantita${id}" class="quantita-span">${qta}</span>
                             <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
                         </div>
                         <div class="endBlock"></div>
@@ -50,7 +50,7 @@ function GraphicManager() {
     // =============================================================
     // BOTTONI + / −
     // =============================================================
-    this.setButtonPlusMinus = function (hashmap) {
+    this.setButtonPlusMinus = function (ordine) {
 
         elencoPrincipale.forEach(cat => {
             (elencoPietanze[cat] || []).forEach(p => {
@@ -58,22 +58,18 @@ function GraphicManager() {
                 const id = String(p.id);
 
                 $("#plus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
-                    q++;
-                    $("#quantita" + id).text(q);
-                    hashmap.put(id, q);
-                    dataManager.saveInstanceHashmap(hashmap);
+                    ordine[id] = (ordine[id] || 0) + 1;
+                    $("#quantita" + id).text(ordine[id]);
+                    dataManager.saveInstanceHashmap(ordine);
                 });
 
                 $("#minus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
-                    q = Math.max(q - 1, 0);
-                    $("#quantita" + id).text(q);
+                    ordine[id] = Math.max((ordine[id] || 0) - 1, 0);
 
-                    if (q === 0) hashmap.remove(id);
-                    else hashmap.put(id, q);
+                    if (ordine[id] === 0) delete ordine[id];
 
-                    dataManager.saveInstanceHashmap(hashmap);
+                    $("#quantita" + id).text(ordine[id] || 0);
+                    dataManager.saveInstanceHashmap(ordine);
                 });
             });
         });
@@ -85,8 +81,7 @@ function GraphicManager() {
     // =============================================================
     this.popolaResoconto = function () {
 
-        const hashmap = dataManager.getInstanceHashmap();
-        const ordine = hashmap.toObject();
+        const ordine = dataManager.getInstanceHashmap();
 
         if (Object.keys(ordine).length === 0) {
             $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
@@ -102,11 +97,12 @@ function GraphicManager() {
             const articoli = (elencoPietanze[cat] || [])
                 .filter(p => ordine[String(p.id)] !== undefined);
 
-            if (articoli.length === 0) return;
+            if (!articoli.length) return;
 
             html += `<h3>${cat}</h3>`;
 
             articoli.forEach(p => {
+
                 const id = String(p.id);
                 const q = ordine[id];
                 const prezzo = Number(p.prezzo) || 0;
@@ -146,7 +142,7 @@ function GraphicManager() {
     this.popolaQRCode = function () {
         $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            text: JSON.stringify(dataManager.getInstanceHashmap()),
             width: 256,
             height: 256
         });
