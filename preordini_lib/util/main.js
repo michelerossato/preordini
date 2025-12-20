@@ -7,22 +7,20 @@ var qrcodeManager;
 
 
 // ======================================================================
-// AVVIO APPLICAZIONE (CHIAMATA DOPO CARICAMENTO DATI)
+// CHIAMATA DOPO CARICAMENTO JSONP (data.js)
 // ======================================================================
 function avviaApplicazione() {
 
-    console.log("🚀 Avvio applicazione");
+    console.log("✅ avviaApplicazione: menu pronto");
 
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
 
-    // --------------------------------------------------
-    // FUNZIONE UNICA PER COSTRUIRE IL MENU
-    // --------------------------------------------------
+    // =============================================================
+    // COSTRUZIONE MENU (UNA SOLA FUNZIONE)
+    // =============================================================
     function costruisciMenu() {
-
-        console.log("🍽️ Costruzione menu");
 
         const hashmap = dataManager.getInstanceHashmap();
 
@@ -36,11 +34,16 @@ function avviaApplicazione() {
         $("#coperti").val(dataManager.getInstanceCoperti());
     }
 
-    // 👉 COSTRUZIONE INIZIALE
+    // prima costruzione
     costruisciMenu();
 
-    // 👉 OGNI VOLTA CHE TORNI ALLA PAGINA
+    // ricostruzione quando torni alla pagina
     $(document).on("pageshow", "#pageprinc", costruisciMenu);
+
+    // se c’è già un ordine → vai al resoconto
+    if (!dataManager.getInstanceHashmap().isEmpty()) {
+        $.mobile.pageContainer.pagecontainer("change", "#pageres");
+    }
 }
 
 
