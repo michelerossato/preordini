@@ -1,47 +1,55 @@
 // ======================================================================
 // MANAGER GLOBALI
 // ======================================================================
-var graphicManager;
-var dataManager;
-var qrcodeManager;
+var graphicManager = null;
+var dataManager = null;
+var qrcodeManager = null;
 
 
 // ======================================================================
-// AVVIO APPLICAZIONE
+// INIZIALIZZAZIONE APP (UNA SOLA VOLTA)
 // ======================================================================
 $(document).on("mobileinit", function () {
-    $.mobile.hashListeningEnabled = false;
-    $.mobile.pushStateEnabled = false;
+    // niente qui, serve solo a garantire ordine di caricamento
 });
 
+
+// ======================================================================
+// PAGE CREATE – viene eseguito UNA SOLA VOLTA
+// ======================================================================
 $(document).on("pagecreate", "#pageprinc", function () {
 
-    console.log("Applicazione avviata");
+    console.log("Pagecreate pageprinc");
 
-    dataManager = new Data();
-    graphicManager = new GraphicManager();
-    qrcodeManager = new QRCodeManager();
-
-    costruisciMenu();
+    if (!dataManager) {
+        dataManager = new Data();
+        graphicManager = new GraphicManager();
+        qrcodeManager = new QRCodeManager();
+    }
 });
 
 
 // ======================================================================
-// COSTRUZIONE MENU
+// PAGE SHOW – OGNI VOLTA CHE TORNI ALLA PAGINA
 // ======================================================================
-function costruisciMenu() {
+$(document).on("pageshow", "#pageprinc", function () {
+
+    console.log("Pageshow pageprinc");
 
     const hashmap = dataManager.getInstanceHashmap();
 
+    // Costruzione menu
     $("#lista")
         .empty()
         .html(graphicManager.generateMenu(hashmap))
         .trigger("create");
 
+    // Attiva + e -
     graphicManager.setButtonPlusMinus(hashmap);
 
+    // Ripristina coperti
     $("#coperti").val(dataManager.getInstanceCoperti());
-}
+});
 
 
 // ======================================================================
@@ -49,7 +57,6 @@ function costruisciMenu() {
 // ======================================================================
 $(document).on("click", "#resoconto-btn", function (e) {
     e.preventDefault();
-    e.stopPropagation();
 
     const hashmap = dataManager.getInstanceHashmap();
 
@@ -64,28 +71,16 @@ $(document).on("click", "#resoconto-btn", function (e) {
 
     graphicManager.popolaResoconto();
 
-    $.mobile.changePage("#pageres", {
-        transition: "slide"
-    });
+    $.mobile.pageContainer.pagecontainer("change", "#pageres");
 });
 
 
 // ======================================================================
-// MODIFICA ORDINE
+// TORNA A MODIFICA ORDINE
 // ======================================================================
 $(document).on("click", "#modifica-btn", function (e) {
     e.preventDefault();
-    $.mobile.changePage("#pageprinc", { transition: "slide", reverse: true });
-});
-
-
-// ======================================================================
-// CONFERMA → QR CODE
-// ======================================================================
-$(document).on("click", "#conferma-btn", function (e) {
-    e.preventDefault();
-    graphicManager.popolaQRCode();
-    $.mobile.changePage("#pageqrcode", { transition: "slide" });
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
 
 
@@ -100,7 +95,18 @@ $(document).on("click", "#elimina-ordine-btn", function (e) {
     dataManager.saveInstanceHashmap(new HashMap());
     dataManager.saveInstanceCoperti("");
 
-    $.mobile.changePage("#pageprinc", { transition: "fade" });
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+});
+
+
+// ======================================================================
+// CONFERMA → QR CODE
+// ======================================================================
+$(document).on("click", "#conferma-btn", function (e) {
+    e.preventDefault();
+
+    graphicManager.popolaQRCode();
+    $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
 });
 
 
@@ -115,5 +121,5 @@ $(document).on("click", "#nuovo-ordine-btn", function (e) {
     dataManager.saveInstanceHashmap(new HashMap());
     dataManager.saveInstanceCoperti("");
 
-    $.mobile.changePage("#pageprinc", { transition: "fade" });
+    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
 });
