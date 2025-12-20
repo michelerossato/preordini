@@ -7,49 +7,53 @@ var qrcodeManager;
 
 
 // ======================================================================
-// AVVIO APPLICAZIONE (chiamata da data.js)
+// AVVIO APPLICAZIONE
 // ======================================================================
-function avviaApplicazione() {
+$(document).on("mobileinit", function () {
+    $.mobile.hashListeningEnabled = false;
+    $.mobile.pushStateEnabled = false;
+});
 
-    console.log("Applicazione avviata. Inizializzo i manager...");
+$(document).on("pagecreate", "#pageprinc", function () {
+
+    console.log("Applicazione avviata");
 
     dataManager = new Data();
     graphicManager = new GraphicManager();
     qrcodeManager = new QRCodeManager();
 
-    function costruisciMenu() {
-
-        var hashmap = dataManager.getInstanceHashmap();
-
-        $("#lista")
-            .empty()
-            .html(graphicManager.generateMenu(hashmap))
-            .trigger("create");
-
-        graphicManager.setButtonPlusMinus(hashmap);
-
-        $("#coperti").val(dataManager.getInstanceCoperti());
-    }
-
     costruisciMenu();
-    $(document).on("pageshow", "#pageprinc", costruisciMenu);
+});
+
+
+// ======================================================================
+// COSTRUZIONE MENU
+// ======================================================================
+function costruisciMenu() {
+
+    const hashmap = dataManager.getInstanceHashmap();
+
+    $("#lista")
+        .empty()
+        .html(graphicManager.generateMenu(hashmap))
+        .trigger("create");
+
+    graphicManager.setButtonPlusMinus(hashmap);
+
+    $("#coperti").val(dataManager.getInstanceCoperti());
 }
 
 
 // ======================================================================
-// EVENTI BOTTONI
-// ======================================================================
-
-// ---------------------
 // VEDI RESOCONTO
-// ---------------------
-$(document).on("click", "#resoconto-btn", function (evt) {
-    evt.preventDefault();
+// ======================================================================
+$(document).on("click", "#resoconto-btn", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-    var hashmap = dataManager.getInstanceHashmap();
+    const hashmap = dataManager.getInstanceHashmap();
 
-    // ✅ CONTROLLO CORRETTO
-    if (hashmap.size() === 0) {
+    if (hashmap.isEmpty()) {
         graphicManager.generatePopup();
         $("#popup-ordine").popup("open");
         return;
@@ -60,55 +64,56 @@ $(document).on("click", "#resoconto-btn", function (evt) {
 
     graphicManager.popolaResoconto();
 
-    $.mobile.pageContainer.pagecontainer("change", "#pageres");
+    $.mobile.changePage("#pageres", {
+        transition: "slide"
+    });
 });
 
 
-// ---------------------
-// ELIMINA ORDINE
-// ---------------------
-$(document).on("click", "#elimina-ordine-btn", function (evt) {
-    evt.preventDefault();
-
-    if (!confirm("Sei sicuro di voler eliminare l'ordine attuale?")) return;
-
-    dataManager.saveInstanceHashmap(new HashMap());
-    dataManager.saveInstanceCoperti("");
-
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
-});
-
-
-// ---------------------
+// ======================================================================
 // MODIFICA ORDINE
-// ---------------------
-$(document).on("click", "#modifica-btn", function (evt) {
-    evt.preventDefault();
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+// ======================================================================
+$(document).on("click", "#modifica-btn", function (e) {
+    e.preventDefault();
+    $.mobile.changePage("#pageprinc", { transition: "slide", reverse: true });
 });
 
 
-// ---------------------
-// CONFERMA ORDINE
-// ---------------------
-$(document).on("click", "#conferma-btn", function (evt) {
-    evt.preventDefault();
-
+// ======================================================================
+// CONFERMA → QR CODE
+// ======================================================================
+$(document).on("click", "#conferma-btn", function (e) {
+    e.preventDefault();
     graphicManager.popolaQRCode();
-    $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
+    $.mobile.changePage("#pageqrcode", { transition: "slide" });
 });
 
 
-// ---------------------
-// NUOVO ORDINE
-// ---------------------
-$(document).on("click", "#nuovo-ordine-btn", function (evt) {
-    evt.preventDefault();
+// ======================================================================
+// ELIMINA ORDINE
+// ======================================================================
+$(document).on("click", "#elimina-ordine-btn", function (e) {
+    e.preventDefault();
 
-    if (!confirm("Vuoi davvero iniziare un nuovo ordine?")) return;
+    if (!confirm("Sei sicuro di voler eliminare l'ordine?")) return;
 
     dataManager.saveInstanceHashmap(new HashMap());
     dataManager.saveInstanceCoperti("");
 
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+    $.mobile.changePage("#pageprinc", { transition: "fade" });
+});
+
+
+// ======================================================================
+// NUOVO ORDINE
+// ======================================================================
+$(document).on("click", "#nuovo-ordine-btn", function (e) {
+    e.preventDefault();
+
+    if (!confirm("Vuoi iniziare un nuovo ordine?")) return;
+
+    dataManager.saveInstanceHashmap(new HashMap());
+    dataManager.saveInstanceCoperti("");
+
+    $.mobile.changePage("#pageprinc", { transition: "fade" });
 });
