@@ -1,45 +1,50 @@
-c// ======================================================================
+// ======================================================================
 // MANAGER GLOBALI
 // ======================================================================
-var graphicManager;
-var dataManager;
-var qrcodeManager;
+var graphicManager = null;
+var dataManager = null;
+var qrcodeManager = null;
 
 
 // ======================================================================
-// PAGECREATE – una sola volta
+// PAGE CREATE – UNA SOLA VOLTA
 // ======================================================================
 $(document).on("pagecreate", "#pageprinc", function () {
 
-    console.log("pagecreate pageprinc");
+    console.log("✔ pagecreate pageprinc");
 
-    dataManager = new Data();
-    graphicManager = new GraphicManager();
-    qrcodeManager = new QRCodeManager();
+    if (!dataManager) {
+        dataManager = new Data();
+        graphicManager = new GraphicManager();
+        qrcodeManager = new QRCodeManager();
+    }
 });
 
 
 // ======================================================================
-// PAGESHOW – ogni volta che la pagina appare
+// PAGE SHOW – OGNI VOLTA CHE LA PAGINA È VISIBILE
 // ======================================================================
 $(document).on("pageshow", "#pageprinc", function () {
 
-    console.log("pageshow pageprinc");
+    console.log("✔ pageshow pageprinc");
+
+    if (!dataManager || !graphicManager) {
+        console.error("Manager non inizializzati");
+        return;
+    }
 
     const hashmap = dataManager.getInstanceHashmap();
 
-    // 🔥 COSTRUZIONE MENU
-    const html = graphicManager.generateMenu(hashmap);
+    // Costruzione menu
+    $("#lista")
+        .empty()
+        .html(graphicManager.generateMenu(hashmap))
+        .trigger("create");
 
-    $("#lista").empty().html(html);
-
-    // 🔥 jQuery Mobile refresh
-    $("#pageprinc").trigger("create");
-
-    // 🔥 Attiva + e −
+    // Attiva + e -
     graphicManager.setButtonPlusMinus(hashmap);
 
-    // Coperti
+    // Ripristina coperti
     $("#coperti").val(dataManager.getInstanceCoperti());
 });
 
@@ -67,7 +72,7 @@ $(document).on("click", "#resoconto-btn", function (e) {
 
 
 // ======================================================================
-// TORNA A MODIFICA
+// TORNA A MODIFICA ORDINE
 // ======================================================================
 $(document).on("click", "#modifica-btn", function (e) {
     e.preventDefault();
@@ -91,7 +96,7 @@ $(document).on("click", "#elimina-ordine-btn", function (e) {
 
 
 // ======================================================================
-// CONFERMA → QR
+// CONFERMA → QR CODE
 // ======================================================================
 $(document).on("click", "#conferma-btn", function (e) {
     e.preventDefault();
