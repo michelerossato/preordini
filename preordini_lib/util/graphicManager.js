@@ -1,9 +1,9 @@
 function GraphicManager() {
 
     // =============================================================
-    // MENU PRINCIPALE
+    // GENERA MENU
     // =============================================================
-    this.generateMenu = function (ordine) {
+    this.generateMenu = function (hashmap) {
 
         let html = `
             <div class="form-ordine">
@@ -15,21 +15,25 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
+            const articoli = elencoPietanze[cat] || [];
+
             html += `<div data-role="collapsible"><h4>${cat}</h4>`;
 
-            (elencoPietanze[cat] || []).forEach(p => {
+            articoli.forEach(p => {
 
-                const id = p.id;
-                const q = ordine[id] || 0;
+                const id = String(p.id);   // 🔥 SEMPRE STRINGA
+                const nome = p.descrizione || p.nome || "";
+                const prezzo = Number(p.prezzo) || 0;
+                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
-                        <div class="left nome-pietanza">${p.descrizione}</div>
-                        <div class="center prezzo-pietanza-ordine">${p.prezzo.toFixed(2)} €</div>
+                        <div class="left nome-pietanza">${nome}</div>
+                        <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
                         <div class="right controlli">
-                            <button class="ui-btn brown-btn minus-btn" data-id="${id}">−</button>
-                            <span class="quantita-span" id="q_${id}">${q}</span>
-                            <button class="ui-btn brown-btn plus-btn" data-id="${id}">+</button>
+                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
+                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
+                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
                         </div>
                         <div class="endBlock"></div>
                     </div>
@@ -44,25 +48,34 @@ function GraphicManager() {
 
 
     // =============================================================
-    // BOTTONI + / -
+    // BOTTONI + / −
     // =============================================================
-    this.setButtonPlusMinus = function (ordine) {
+    this.setButtonPlusMinus = function (hashmap) {
 
-        $(".plus-btn").off().on("click", function () {
-            const id = $(this).data("id");
-            ordine[id] = (ordine[id] || 0) + 1;
-            $("#q_" + id).text(ordine[id]);
-            dataManager.saveInstanceOrdine(ordine);
-        });
+        elencoPrincipale.forEach(cat => {
+            (elencoPietanze[cat] || []).forEach(p => {
 
-        $(".minus-btn").off().on("click", function () {
-            const id = $(this).data("id");
-            ordine[id] = Math.max((ordine[id] || 0) - 1, 0);
+                const id = String(p.id);
 
-            if (ordine[id] === 0) delete ordine[id];
+                $("#plus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q++;
+                    $("#quantita" + id).text(q);
+                    hashmap.put(id, q);
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
 
-            $("#q_" + id).text(ordine[id] || 0);
-            dataManager.saveInstanceOrdine(ordine);
+                $("#minus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q = Math.max(q - 1, 0);
+                    $("#quantita" + id).text(q);
+
+                    if (q === 0) hashmap.remove(id);
+                    else hashmap.put(id, q);
+
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
+            });
         });
     };
 
@@ -72,28 +85,32 @@ function GraphicManager() {
     // =============================================================
     this.popolaResoconto = function () {
 
-        const ordine = dataManager.getInstanceOrdine();
-        let html = "";
-        let totale = 0;
-        let totaleQta = 0;
+        const hashmap = dataManager.getInstanceHashmap();
+        const ordine = hashmap.toObject();
 
         if (Object.keys(ordine).length === 0) {
             $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
             return;
         }
 
+        let html = "";
+        let totale = 0;
+        let totaleQta = 0;
+
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => ordine[p.id]);
+                .filter(p => ordine[String(p.id)] !== undefined);
 
-            if (!articoli.length) return;
+            if (articoli.length === 0) return;
 
             html += `<h3>${cat}</h3>`;
 
             articoli.forEach(p => {
-                const q = ordine[p.id];
-                const subtot = q * p.prezzo;
+                const id = String(p.id);
+                const q = ordine[id];
+                const prezzo = Number(p.prezzo) || 0;
+                const subtot = q * prezzo;
 
                 totale += subtot;
                 totaleQta += q;
@@ -115,9 +132,37 @@ function GraphicManager() {
                 <div class="left"><strong>Totale</strong></div>
                 <div class="center"><strong>${totaleQta}</strong></div>
                 <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
+                <div class="endBlock"></div>
             </div>
         `;
 
         $("#resoconto").html(html);
+    };
+
+
+    // =============================================================
+    // QR CODE
+    // =============================================================
+    this.popolaQRCode = function () {
+        $("#qrcode").empty();
+        new QRCode(document.getElementById("qrcode"), {
+            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            width: 256,
+            height: 256
+        });
+    };
+
+
+    // =============================================================
+    // POPUP
+    // =============================================================
+    this.generatePopup = function () {
+        $("#info-ordine-popup").html(`
+            <p>Il tuo ordine è vuoto.</p>
+            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
+        `);
+        $("#ok-popup-btn").off().on("click", () => {
+            $("#popup-ordine").popup("close");
+        });
     };
 }
