@@ -1,12 +1,13 @@
 // ======================================================================
-// VARIABILI MENU
+//  VARIABILI GLOBALI PER MENU
 // ======================================================================
 var elencoPrincipale = [];
+var categorie = [];
 var elencoPietanze = {};
 
 
 // ======================================================================
-// CARICAMENTO MENU (JSONP)
+//  CARICAMENTO JSONP DA APPS SCRIPT (SOLUZIONE CORS)
 // ======================================================================
 function popolaMenuDaCSV() {
 
@@ -15,29 +16,49 @@ function popolaMenuDaCSV() {
     $.ajax({
         url: API_URL,
         dataType: "jsonp",
-        jsonp: "callback",
+        jsonp: "callback",     // <-- Google Apps Script vuole *esattamente* questo
+        jsonpCallback: "callback", // <-- deve combaciare con il default del tuo script
 
         success: function (data) {
 
-            const map = {};
+            console.log("✔ Dati API caricati:", data);
 
-            data.forEach(r => {
-                if (!r.id || !r.CAT) return;
+            const raw = data.filter(r => r.id && String(r.CAT).trim());
 
+            const categorieMap = {};
+
+            raw.forEach(r => {
                 const cat = String(r.CAT).trim();
-                r.id = parseInt(r.id, 10);
-                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
 
-                if (!map[cat]) map[cat] = [];
-                map[cat].push(r);
+                if (!categorieMap[cat]) {
+                    categorieMap[cat] = {
+                        descrizione: cat,
+                        articoli: []
+                    };
+                }
+
+                r.id = parseInt(r.id, 10) || 0;
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+                r.nome = r.descrizione;
+
+                categorieMap[cat].articoli.push(r);
             });
 
-            elencoPrincipale = Object.keys(map);
-            elencoPietanze = map;
+            categorie = Object.values(categorieMap);
+            elencoPrincipale = categorie.map(c => c.descrizione);
 
-            console.log("✔ Menu caricato:", elencoPrincipale);
+            elencoPietanze = {};
+            categorie.forEach(c => elencoPietanze[c.descrizione] = c.articoli);
 
-            avviaApplicazione();
+            console.log("✔ Menu caricato con successo:", elencoPrincipale);
+
+            if (typeof avviaApplicazione === "function") {
+                avviaApplicazione();
+            }
+        },
+
+        error: function (xhr, status, error) {
+            console.error("❌ Errore JSONP:", status, error);
         }
     });
 }
@@ -46,38 +67,32 @@ popolaMenuDaCSV();
 
 
 // ======================================================================
-// CLASSE DATA (COMPATIBILE CON HashMap)
+//  CLASSE DATA
 // ======================================================================
 function Data() {
 
     this.getInstanceHashmap = function () {
-
-        const saved = $.cookie("hashmap");
-        const map = new HashMap();
-
-        if (!saved) return map;
+        var saved = $.cookie("hashmap");
+        if (!saved) return new HashMap();
 
         try {
-            const obj = JSON.parse(saved);
-            Object.keys(obj).forEach(k => {
-                map.put(parseInt(k), obj[k]);
-            });
+            var obj = JSON.parse(saved);
+            return HashMap.fromObject(obj);
         } catch (e) {
-            console.error("Errore cookie hashmap", e);
+            console.error("Errore lettura cookie:", e);
+            return new HashMap();
         }
-
-        return map;
     };
 
     this.saveInstanceHashmap = function (map) {
-
-        const obj = {};
-        map.keys().forEach(k => {
-            obj[k] = map.get(k);
-        });
-
-        $.cookie("hashmap", JSON.stringify(obj), { expires: 1 });
+        $.cookie("hashmap", JSON.stringify(map.toObject()), { expires: 1 });
     };
 
     this.getInstanceCoperti = function () {
-        retu
+        return $.cookie("coperti") || "";
+    };
+
+    this.saveInstanceCoperti = function (v) {
+        $.cookie("coperti", v, { expires: 1 });
+    };
+}
