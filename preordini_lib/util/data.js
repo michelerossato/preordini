@@ -1,29 +1,88 @@
-function Data() {
+// ======================================================================
+// VARIABILI MENU
+// ======================================================================
+var elencoPrincipale = [];
+var elencoPietanze = {};
 
-    this.getInstanceHashmap = function () {
 
-        var saved = $.cookie("hashmap");
-        if (!saved) return new HashMap();
+// ======================================================================
+// CARICAMENTO MENU DA GOOGLE SCRIPT (JSONP)
+// ======================================================================
+function popolaMenuDaCSV() {
 
-        try {
-            var arr = JSON.parse(saved);   // array di Entry serializzati
-            var map = new HashMap();
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
-            arr.forEach(e => {
-                map.put(parseInt(e.key), parseInt(e.val));
+    $.ajax({
+        url: API_URL,
+        dataType: "jsonp",
+        jsonp: "callback",
+
+        success: function (data) {
+
+            const map = {};
+
+            data.forEach(r => {
+                if (!r.id || !r.CAT) return;
+
+                const cat = String(r.CAT).trim();
+                r.id = parseInt(r.id, 10);
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+
+                if (!map[cat]) map[cat] = [];
+                map[cat].push(r);
             });
 
-            return map;
+            elencoPrincipale = Object.keys(map);
+            elencoPietanze = map;
 
-        } catch (e) {
-            console.error("Errore lettura cookie hashmap:", e);
-            return new HashMap();
+            console.log("✔ Menu caricato:", elencoPrincipale);
+
+            avviaApplicazione();
         }
+    });
+}
+
+popolaMenuDaCSV();
+
+
+// ======================================================================
+// CLASSE DATA (🔥 ADATTATA AL TUO HASHMAP)
+// ======================================================================
+function Data() {
+
+    // --------------------------------------------------
+    // LEGGE HASHMAP DAL COOKIE
+    // --------------------------------------------------
+    this.getInstanceHashmap = function () {
+
+        const saved = $.cookie("hashmap");
+        const map = new HashMap();
+
+        if (!saved) return map;
+
+        try {
+            const obj = JSON.parse(saved);
+            for (let k in obj) {
+                map.put(parseInt(k), obj[k]);
+            }
+        } catch (e) {
+            console.error("Errore cookie hashmap:", e);
+        }
+
+        return map;
     };
 
+    // --------------------------------------------------
+    // SALVA HASHMAP NEL COOKIE
+    // --------------------------------------------------
     this.saveInstanceHashmap = function (map) {
-        // 🔥 salva direttamente map.value
-        $.cookie("hashmap", JSON.stringify(map.value), { expires: 1 });
+
+        const obj = {};
+        map.keys().forEach(k => {
+            obj[k] = map.get(k);
+        });
+
+        $.cookie("hashmap", JSON.stringify(obj), { expires: 1 });
     };
 
     this.getInstanceCoperti = function () {
