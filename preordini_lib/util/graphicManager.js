@@ -21,12 +21,11 @@ function GraphicManager() {
 
                 const id = parseInt(p.id);
                 const q = hashmap.contains(id) ? hashmap.get(id) : 0;
-                const prezzo = Number(p.prezzo) || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
                         <div class="left">${p.descrizione}</div>
-                        <div class="center">${prezzo.toFixed(2)} €</div>
+                        <div class="center">${p.prezzo.toFixed(2)} €</div>
                         <div class="right">
                             <button id="minus${id}" class="ui-btn">−</button>
                             <span id="quantita${id}">${q}</span>
@@ -87,7 +86,7 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO (🔥 ORA FUNZIONA DAVVERO)
+    // RESOCONTO (🔥 ORA FUNZIONA)
     // =============================================================
     this.popolaResoconto = function () {
 
@@ -106,7 +105,7 @@ function GraphicManager() {
             const articoli = (elencoPietanze[cat] || [])
                 .filter(p => map.contains(parseInt(p.id)));
 
-            if (articoli.length === 0) return;
+            if (!articoli.length) return;
 
             html += `<h3>${cat}</h3>`;
 
@@ -114,9 +113,7 @@ function GraphicManager() {
 
                 const id = parseInt(p.id);
                 const q = map.get(id);
-                const prezzo = Number(p.prezzo) || 0;
-                const subt = q * prezzo;
-
+                const subt = q * p.prezzo;
                 totale += subt;
 
                 html += `
