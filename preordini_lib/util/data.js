@@ -2,7 +2,6 @@
 // VARIABILI GLOBALI MENU
 // ======================================================================
 var elencoPrincipale = [];
-var categorie = [];
 var elencoPietanze = {};
 
 
@@ -17,51 +16,38 @@ function popolaMenuDaCSV() {
         url: API_URL,
         dataType: "jsonp",
         jsonp: "callback",
-        jsonpCallback: "callback",
 
         success: function (data) {
 
             console.log("✔ Dati API caricati:", data);
 
-            const raw = data.filter(r => r.id && r.CAT);
-
             const categorieMap = {};
 
-            raw.forEach(r => {
+            data.forEach(r => {
+                if (!r.id || !r.CAT) return;
 
                 const cat = String(r.CAT).trim();
+                const id = String(r.id).trim();
 
-                if (!categorieMap[cat]) {
-                    categorieMap[cat] = {
-                        descrizione: cat,
-                        articoli: []
-                    };
-                }
+                if (!categorieMap[cat]) categorieMap[cat] = [];
 
-                r.id = String(r.id); // 🔥 ID SEMPRE STRINGA
-                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
-                r.descrizione = r.descrizione || r.nome || "";
-
-                categorieMap[cat].articoli.push(r);
+                categorieMap[cat].push({
+                    id: id,
+                    descrizione: r.descrizione,
+                    prezzo: Number(String(r.prezzo).replace(",", ".")) || 0
+                });
             });
 
-            categorie = Object.values(categorieMap);
-            elencoPrincipale = categorie.map(c => c.descrizione);
-
-            elencoPietanze = {};
-            categorie.forEach(c => {
-                elencoPietanze[c.descrizione] = c.articoli;
-            });
+            elencoPrincipale = Object.keys(categorieMap);
+            elencoPietanze = categorieMap;
 
             console.log("✔ Menu caricato con successo:", elencoPrincipale);
 
-            if (typeof avviaApplicazione === "function") {
-                avviaApplicazione();
-            }
+            avviaApplicazione();
         },
 
-        error: function (xhr, status, error) {
-            console.error("❌ Errore caricamento menu:", status, error);
+        error: function (e) {
+            console.error("❌ Errore caricamento menu", e);
         }
     });
 }
@@ -70,46 +56,43 @@ popolaMenuDaCSV();
 
 
 // ======================================================================
-// CLASSE DATA (ROBUSTA)
+// CLASSE DATA (COMPATIBILE CON HashMap.js)
 // ======================================================================
 function Data() {
 
-    // -----------------------------
-    // HASHMAP
-    // -----------------------------
+    // -------- HASHMAP --------
     this.getInstanceHashmap = function () {
 
         const saved = $.cookie("hashmap");
-        if (!saved) return new HashMap();
+        const map = new HashMap();
+
+        if (!saved) return map;
 
         try {
             const obj = JSON.parse(saved);
-            return HashMap.fromObject(obj);
+            for (let k in obj) {
+                map.put(k, obj[k]);
+            }
         } catch (e) {
-            console.error("Errore lettura cookie hashmap:", e);
-            return new HashMap();
+            console.error("Errore cookie hashmap", e);
         }
+
+        return map;
     };
 
     this.saveInstanceHashmap = function (map) {
 
-        let obj = {};
+        const obj = {};
 
-        // ✅ accetta HashMap
-        if (map && typeof map.toObject === "function") {
-            obj = map.toObject();
-        }
-        // ✅ accetta oggetto semplice
-        else if (typeof map === "object") {
-            obj = map;
+        const keys = map.keys();
+        for (let i = 0; i < keys.length; i++) {
+            obj[keys[i]] = map.get(keys[i]);
         }
 
         $.cookie("hashmap", JSON.stringify(obj), { expires: 1 });
     };
 
-    // -----------------------------
-    // COPERTI
-    // -----------------------------
+    // -------- COPERTI --------
     this.getInstanceCoperti = function () {
         return $.cookie("coperti") || "";
     };
