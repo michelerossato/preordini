@@ -1,9 +1,9 @@
 function GraphicManager() {
 
     // =============================================================
-    // MENU
+    // GENERA MENU
     // =============================================================
-    this.generateMenu = function (map) {
+    this.generateMenu = function (hashmap) {
 
         let html = `
             <div class="form-ordine">
@@ -15,22 +15,27 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
+            const articoli = elencoPietanze[cat] || [];
+
             html += `<div data-role="collapsible"><h4>${cat}</h4>`;
 
-            (elencoPietanze[cat] || []).forEach(p => {
+            articoli.forEach(p => {
 
-                const id = parseInt(p.id);
-                const q = map.contains(id) ? map.get(id) : 0;
+                const id = String(p.id);   // 🔥 SEMPRE STRINGA
+                const nome = p.descrizione || p.nome || "";
+                const prezzo = Number(p.prezzo) || 0;
+                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
-                        <div class="left">${p.descrizione}</div>
-                        <div class="center">${p.prezzo.toFixed(2)} €</div>
-                        <div class="right">
-                            <button id="minus${id}" class="ui-btn">−</button>
-                            <span id="quantita${id}">${q}</span>
-                            <button id="plus${id}" class="ui-btn">+</button>
+                        <div class="left nome-pietanza">${nome}</div>
+                        <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
+                        <div class="right controlli">
+                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
+                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
+                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
                         </div>
+                        <div class="endBlock"></div>
                     </div>
                 `;
             });
@@ -43,29 +48,32 @@ function GraphicManager() {
 
 
     // =============================================================
-    // + / -
+    // BOTTONI + / −
     // =============================================================
-    this.setButtonPlusMinus = function (map) {
+    this.setButtonPlusMinus = function (hashmap) {
 
         elencoPrincipale.forEach(cat => {
             (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = parseInt(p.id);
+                const id = String(p.id);
 
                 $("#plus" + id).off().on("click", function () {
-                    const q = map.contains(id) ? map.get(id) + 1 : 1;
-                    map.put(id, q);
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q++;
                     $("#quantita" + id).text(q);
-                    dataManager.saveInstanceHashmap(map);
+                    hashmap.put(id, q);
+                    dataManager.saveInstanceHashmap(hashmap);
                 });
 
                 $("#minus" + id).off().on("click", function () {
-                    if (!map.contains(id)) return;
-                    const q = map.get(id) - 1;
-                    if (q <= 0) map.remove(id);
-                    else map.put(id, q);
-                    $("#quantita" + id).text(Math.max(q, 0));
-                    dataManager.saveInstanceHashmap(map);
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q = Math.max(q - 1, 0);
+                    $("#quantita" + id).text(q);
+
+                    if (q === 0) hashmap.remove(id);
+                    else hashmap.put(id, q);
+
+                    dataManager.saveInstanceHashmap(hashmap);
                 });
             });
         });
@@ -73,45 +81,88 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO (✔ ORA FUNZIONA)
+    // RESOCONTO
     // =============================================================
     this.popolaResoconto = function () {
 
-        const map = dataManager.getInstanceHashmap();
+        const hashmap = dataManager.getInstanceHashmap();
+        const ordine = hashmap.toObject();
 
-        if (map.isEmpty()) {
-            $("#resoconto").html("<p>Ordine vuoto</p>");
+        if (Object.keys(ordine).length === 0) {
+            $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
             return;
         }
 
         let html = "";
         let totale = 0;
+        let totaleQta = 0;
 
         elencoPrincipale.forEach(cat => {
 
-            const items = (elencoPietanze[cat] || [])
-                .filter(p => map.contains(parseInt(p.id)));
+            const articoli = (elencoPietanze[cat] || [])
+                .filter(p => ordine[String(p.id)] !== undefined);
 
-            if (!items.length) return;
+            if (articoli.length === 0) return;
 
             html += `<h3>${cat}</h3>`;
 
-            items.forEach(p => {
-                const id = parseInt(p.id);
-                const q = map.get(id);
-                const subt = q * p.prezzo;
-                totale += subt;
+            articoli.forEach(p => {
+                const id = String(p.id);
+                const q = ordine[id];
+                const prezzo = Number(p.prezzo) || 0;
+                const subtot = q * prezzo;
+
+                totale += subtot;
+                totaleQta += q;
 
                 html += `
                     <div class="riga-resoconto">
-                        <span>${p.descrizione} x${q}</span>
-                        <span>${subt.toFixed(2)} €</span>
+                        <div class="left">${p.descrizione}</div>
+                        <div class="center">x${q}</div>
+                        <div class="right">${subtot.toFixed(2)} €</div>
+                        <div class="endBlock"></div>
                     </div>
                 `;
             });
         });
 
-        html += `<hr><strong>Totale: ${totale.toFixed(2)} €</strong>`;
+        html += `
+            <hr>
+            <div class="riga-resoconto totale">
+                <div class="left"><strong>Totale</strong></div>
+                <div class="center"><strong>${totaleQta}</strong></div>
+                <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
+                <div class="endBlock"></div>
+            </div>
+        `;
+
         $("#resoconto").html(html);
+    };
+
+
+    // =============================================================
+    // QR CODE
+    // =============================================================
+    this.popolaQRCode = function () {
+        $("#qrcode").empty();
+        new QRCode(document.getElementById("qrcode"), {
+            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            width: 256,
+            height: 256
+        });
+    };
+
+
+    // =============================================================
+    // POPUP
+    // =============================================================
+    this.generatePopup = function () {
+        $("#info-ordine-popup").html(`
+            <p>Il tuo ordine è vuoto.</p>
+            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
+        `);
+        $("#ok-popup-btn").off().on("click", () => {
+            $("#popup-ordine").popup("close");
+        });
     };
 }
