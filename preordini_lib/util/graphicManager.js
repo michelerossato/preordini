@@ -1,5 +1,8 @@
 function GraphicManager() {
 
+    // =============================================================
+    // MENU
+    // =============================================================
     this.generateMenu = function (hashmap) {
 
         let html = `
@@ -16,17 +19,18 @@ function GraphicManager() {
 
             (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = String(p.id);
+                const id = parseInt(p.id);
                 const q = hashmap.contains(id) ? hashmap.get(id) : 0;
+                const prezzo = Number(p.prezzo) || 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
-                        <div class="left nome-pietanza">${p.descrizione}</div>
-                        <div class="center">${p.prezzo.toFixed(2)} €</div>
+                        <div class="left">${p.descrizione}</div>
+                        <div class="center">${prezzo.toFixed(2)} €</div>
                         <div class="right">
-                            <button id="minus${id}">−</button>
+                            <button id="minus${id}" class="ui-btn">−</button>
                             <span id="quantita${id}">${q}</span>
-                            <button id="plus${id}">+</button>
+                            <button id="plus${id}" class="ui-btn">+</button>
                         </div>
                     </div>
                 `;
@@ -39,28 +43,41 @@ function GraphicManager() {
     };
 
 
+    // =============================================================
+    // + / -
+    // =============================================================
     this.setButtonPlusMinus = function (hashmap) {
 
         elencoPrincipale.forEach(cat => {
+
             (elencoPietanze[cat] || []).forEach(p => {
 
-                const id = String(p.id);
+                const id = parseInt(p.id);
 
                 $("#plus" + id).off().on("click", function () {
-                    const q = (hashmap.get(id) || 0) + 1;
+
+                    let q = hashmap.contains(id) ? hashmap.get(id) : 0;
+                    q++;
+
                     hashmap.put(id, q);
                     $("#quantita" + id).text(q);
+
                     dataManager.saveInstanceHashmap(hashmap);
                 });
 
                 $("#minus" + id).off().on("click", function () {
-                    let q = (hashmap.get(id) || 0) - 1;
+
+                    if (!hashmap.contains(id)) return;
+
+                    let q = hashmap.get(id) - 1;
+
                     if (q <= 0) {
                         hashmap.remove(id);
                         q = 0;
                     } else {
                         hashmap.put(id, q);
                     }
+
                     $("#quantita" + id).text(q);
                     dataManager.saveInstanceHashmap(hashmap);
                 });
@@ -69,13 +86,15 @@ function GraphicManager() {
     };
 
 
+    // =============================================================
+    // RESOCONTO (🔥 ORA FUNZIONA DAVVERO)
+    // =============================================================
     this.popolaResoconto = function () {
 
         const map = dataManager.getInstanceHashmap();
-        const ordine = map.map;
 
-        if (Object.keys(ordine).length === 0) {
-            $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
+        if (map.isEmpty()) {
+            $("#resoconto").html("<p>Ordine vuoto</p>");
             return;
         }
 
@@ -84,21 +103,26 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
-            const items = (elencoPietanze[cat] || [])
-                .filter(p => ordine[p.id]);
+            const articoli = (elencoPietanze[cat] || [])
+                .filter(p => map.contains(parseInt(p.id)));
 
-            if (!items.length) return;
+            if (articoli.length === 0) return;
 
             html += `<h3>${cat}</h3>`;
 
-            items.forEach(p => {
-                const q = ordine[p.id];
-                const subt = q * p.prezzo;
+            articoli.forEach(p => {
+
+                const id = parseInt(p.id);
+                const q = map.get(id);
+                const prezzo = Number(p.prezzo) || 0;
+                const subt = q * prezzo;
+
                 totale += subt;
 
                 html += `
-                    <div>
-                        ${p.descrizione} x${q} = ${subt.toFixed(2)} €
+                    <div class="riga-resoconto">
+                        <span>${p.descrizione} x${q}</span>
+                        <span>${subt.toFixed(2)} €</span>
                     </div>
                 `;
             });
