@@ -6,7 +6,7 @@ var elencoPietanze = {};
 
 
 // ======================================================================
-// CARICAMENTO MENU DA GOOGLE SCRIPT (JSONP)
+// CARICAMENTO MENU (JSONP)
 // ======================================================================
 function popolaMenuDaCSV() {
 
@@ -46,13 +46,10 @@ popolaMenuDaCSV();
 
 
 // ======================================================================
-// CLASSE DATA (🔥 ADATTATA AL TUO HASHMAP)
+// CLASSE DATA (COMPATIBILE CON HashMap)
 // ======================================================================
 function Data() {
 
-    // --------------------------------------------------
-    // LEGGE HASHMAP DAL COOKIE
-    // --------------------------------------------------
     this.getInstanceHashmap = function () {
 
         const saved = $.cookie("hashmap");
@@ -62,19 +59,16 @@ function Data() {
 
         try {
             const obj = JSON.parse(saved);
-            for (let k in obj) {
+            Object.keys(obj).forEach(k => {
                 map.put(parseInt(k), obj[k]);
-            }
+            });
         } catch (e) {
-            console.error("Errore cookie hashmap:", e);
+            console.error("Errore cookie hashmap", e);
         }
 
         return map;
     };
 
-    // --------------------------------------------------
-    // SALVA HASHMAP NEL COOKIE
-    // --------------------------------------------------
     this.saveInstanceHashmap = function (map) {
 
         const obj = {};
@@ -86,10 +80,4 @@ function Data() {
     };
 
     this.getInstanceCoperti = function () {
-        return $.cookie("coperti") || "";
-    };
-
-    this.saveInstanceCoperti = function (v) {
-        $.cookie("coperti", v, { expires: 1 });
-    };
-}
+        retu
