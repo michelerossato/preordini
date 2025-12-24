@@ -21,8 +21,8 @@ function GraphicManager() {
 
             articoli.forEach(p => {
 
-                const id = String(p.id);   // 🔥 SEMPRE STRINGA
-                const nome = p.descrizione || p.nome || "";
+                const id = String(p.id);
+                const nome = p.descrizione || "";
                 const prezzo = Number(p.prezzo) || 0;
                 const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
 
@@ -86,9 +86,8 @@ function GraphicManager() {
     this.popolaResoconto = function () {
 
         const hashmap = dataManager.getInstanceHashmap();
-        const ordine = hashmap.toObject();
 
-        if (Object.keys(ordine).length === 0) {
+        if (hashmap.size() === 0) {
             $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
             return;
         }
@@ -100,7 +99,7 @@ function GraphicManager() {
         elencoPrincipale.forEach(cat => {
 
             const articoli = (elencoPietanze[cat] || [])
-                .filter(p => ordine[String(p.id)] !== undefined);
+                .filter(p => hashmap.contains(String(p.id)));
 
             if (articoli.length === 0) return;
 
@@ -108,7 +107,7 @@ function GraphicManager() {
 
             articoli.forEach(p => {
                 const id = String(p.id);
-                const q = ordine[id];
+                const q = hashmap.get(id);
                 const prezzo = Number(p.prezzo) || 0;
                 const subtot = q * prezzo;
 
@@ -146,7 +145,7 @@ function GraphicManager() {
     this.popolaQRCode = function () {
         $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            text: JSON.stringify(dataManager.getInstanceHashmap().map),
             width: 256,
             height: 256
         });
