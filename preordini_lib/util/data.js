@@ -1,12 +1,13 @@
 // ======================================================================
-// VARIABILI GLOBALI MENU
+//  VARIABILI GLOBALI PER MENU
 // ======================================================================
 var elencoPrincipale = [];
+var categorie = [];
 var elencoPietanze = {};
 
 
 // ======================================================================
-// CARICAMENTO MENU DA GOOGLE APPS SCRIPT (JSONP)
+//  CARICAMENTO JSONP DA APPS SCRIPT
 // ======================================================================
 function popolaMenuDaCSV() {
 
@@ -21,21 +22,21 @@ function popolaMenuDaCSV() {
 
             console.log("✔ Dati API caricati:", data);
 
+            const raw = data.filter(r => r.id && String(r.CAT).trim());
             const categorieMap = {};
 
-            data.forEach(r => {
-                if (!r.id || !r.CAT) return;
-
+            raw.forEach(r => {
                 const cat = String(r.CAT).trim();
-                const id = String(r.id).trim();
 
-                if (!categorieMap[cat]) categorieMap[cat] = [];
+                if (!categorieMap[cat]) {
+                    categorieMap[cat] = [];
+                }
 
-                categorieMap[cat].push({
-                    id: id,
-                    descrizione: r.descrizione,
-                    prezzo: Number(String(r.prezzo).replace(",", ".")) || 0
-                });
+                r.id = String(r.id); // 🔥 ID STRINGA
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+                r.descrizione = r.descrizione || r.nome || "";
+
+                categorieMap[cat].push(r);
             });
 
             elencoPrincipale = Object.keys(categorieMap);
@@ -43,11 +44,13 @@ function popolaMenuDaCSV() {
 
             console.log("✔ Menu caricato con successo:", elencoPrincipale);
 
-            avviaApplicazione();
+            if (typeof avviaApplicazione === "function") {
+                avviaApplicazione();
+            }
         },
 
-        error: function (e) {
-            console.error("❌ Errore caricamento menu", e);
+        error: function (xhr, status, error) {
+            console.error("❌ Errore JSONP:", status, error);
         }
     });
 }
@@ -56,11 +59,10 @@ popolaMenuDaCSV();
 
 
 // ======================================================================
-// CLASSE DATA (COMPATIBILE CON HashMap.js)
+//  CLASSE DATA (SENZA fromObject)
 // ======================================================================
 function Data() {
 
-    // -------- HASHMAP --------
     this.getInstanceHashmap = function () {
 
         const saved = $.cookie("hashmap");
@@ -70,34 +72,18 @@ function Data() {
 
         try {
             const obj = JSON.parse(saved);
-            for (let k in obj) {
-                map.put(k, obj[k]);
-            }
+            Object.keys(obj).forEach(k => {
+                map.put(String(k), obj[k]);
+            });
         } catch (e) {
-            console.error("Errore cookie hashmap", e);
+            console.error("Errore lettura cookie hashmap:", e);
         }
 
         return map;
     };
 
     this.saveInstanceHashmap = function (map) {
-
-        const obj = {};
-
-        const keys = map.keys();
-        for (let i = 0; i < keys.length; i++) {
-            obj[keys[i]] = map.get(keys[i]);
-        }
-
-        $.cookie("hashmap", JSON.stringify(obj), { expires: 1 });
+        $.cookie("hashmap", JSON.stringify(map.map), { expires: 1 });
     };
 
-    // -------- COPERTI --------
-    this.getInstanceCoperti = function () {
-        return $.cookie("coperti") || "";
-    };
-
-    this.saveInstanceCoperti = function (v) {
-        $.cookie("coperti", v, { expires: 1 });
-    };
-}
+    this.getInstanceCoperti = functio
