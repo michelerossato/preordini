@@ -3,7 +3,7 @@ function GraphicManager() {
     // =============================================================
     // MENU
     // =============================================================
-    this.generateMenu = function (hashmap) {
+    this.generateMenu = function (map) {
 
         let html = `
             <div class="form-ordine">
@@ -20,7 +20,7 @@ function GraphicManager() {
             (elencoPietanze[cat] || []).forEach(p => {
 
                 const id = parseInt(p.id);
-                const q = hashmap.contains(id) ? hashmap.get(id) : 0;
+                const q = map.contains(id) ? map.get(id) : 0;
 
                 html += `
                     <div class="content-pietanza-ordine">
@@ -45,40 +45,27 @@ function GraphicManager() {
     // =============================================================
     // + / -
     // =============================================================
-    this.setButtonPlusMinus = function (hashmap) {
+    this.setButtonPlusMinus = function (map) {
 
         elencoPrincipale.forEach(cat => {
-
             (elencoPietanze[cat] || []).forEach(p => {
 
                 const id = parseInt(p.id);
 
                 $("#plus" + id).off().on("click", function () {
-
-                    let q = hashmap.contains(id) ? hashmap.get(id) : 0;
-                    q++;
-
-                    hashmap.put(id, q);
+                    const q = map.contains(id) ? map.get(id) + 1 : 1;
+                    map.put(id, q);
                     $("#quantita" + id).text(q);
-
-                    dataManager.saveInstanceHashmap(hashmap);
+                    dataManager.saveInstanceHashmap(map);
                 });
 
                 $("#minus" + id).off().on("click", function () {
-
-                    if (!hashmap.contains(id)) return;
-
-                    let q = hashmap.get(id) - 1;
-
-                    if (q <= 0) {
-                        hashmap.remove(id);
-                        q = 0;
-                    } else {
-                        hashmap.put(id, q);
-                    }
-
-                    $("#quantita" + id).text(q);
-                    dataManager.saveInstanceHashmap(hashmap);
+                    if (!map.contains(id)) return;
+                    const q = map.get(id) - 1;
+                    if (q <= 0) map.remove(id);
+                    else map.put(id, q);
+                    $("#quantita" + id).text(Math.max(q, 0));
+                    dataManager.saveInstanceHashmap(map);
                 });
             });
         });
@@ -86,7 +73,7 @@ function GraphicManager() {
 
 
     // =============================================================
-    // RESOCONTO (🔥 ORA FUNZIONA)
+    // RESOCONTO (✔ ORA FUNZIONA)
     // =============================================================
     this.popolaResoconto = function () {
 
@@ -102,15 +89,14 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
 
-            const articoli = (elencoPietanze[cat] || [])
+            const items = (elencoPietanze[cat] || [])
                 .filter(p => map.contains(parseInt(p.id)));
 
-            if (!articoli.length) return;
+            if (!items.length) return;
 
             html += `<h3>${cat}</h3>`;
 
-            articoli.forEach(p => {
-
+            items.forEach(p => {
                 const id = parseInt(p.id);
                 const q = map.get(id);
                 const subt = q * p.prezzo;
