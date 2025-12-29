@@ -15,27 +15,26 @@
 </head>
 
 <body>
-
     <div data-role="page" id="pageprinc">
         <div data-role="header" data-position="fixed"><h1>Menu Ristorante</h1></div>
         <div role="main" class="ui-content">
-            <div id="lista"></div>
+            <div id="lista">Caricamento menu...</div>
             <button id="resoconto-btn" class="ui-btn green-btn">Vai al Resoconto</button>
         </div>
     </div>
 
     <div data-role="page" id="pageres">
-        <div data-role="header"><h1>Il tuo Ordine</h1></div>
+        <div data-role="header"><h1>Riepilogo</h1></div>
         <div role="main" class="ui-content">
             <div id="resoconto"></div>
-            <button id="conferma-btn" class="ui-btn green-btn">Conferma Ordine</button>
+            <button id="conferma-btn" class="ui-btn green-btn">Conferma e Genera QR</button>
         </div>
     </div>
 
     <div data-role="page" id="pageqrcode">
-        <div data-role="header"><h1>Mostra in Cassa</h1></div>
+        <div data-role="header"><h1>Ordine Pronto</h1></div>
         <div role="main" class="ui-content" style="text-align: center;">
-            <div id="qrcode" style="display: inline-block; margin: 20px;"></div>
+            <div id="qrcode" style="display: inline-block; margin-top: 20px;"></div>
             <button id="nuovo-ordine-btn" class="ui-btn ui-btn-b">Nuovo Ordine</button>
         </div>
     </div>
