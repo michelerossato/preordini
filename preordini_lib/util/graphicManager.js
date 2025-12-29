@@ -14,11 +14,14 @@ function GraphicManager() {
         `;
 
         elencoPrincipale.forEach(cat => {
+
             const articoli = elencoPietanze[cat] || [];
+
             html += `<div data-role="collapsible"><h4>${cat}</h4>`;
 
             articoli.forEach(p => {
-                const id = String(p.id);
+
+                const id = String(p.id);   // 🔥 SEMPRE STRINGA
                 const nome = p.descrizione || p.nome || "";
                 const prezzo = Number(p.prezzo) || 0;
                 const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
@@ -29,70 +32,93 @@ function GraphicManager() {
                         <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
                         <div class="right controlli">
                             <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
-                            <span id="quantita${id}" class="quantita-pietanza-ordine">${quantita}</span>
+                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
                             <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
                         </div>
                         <div class="endBlock"></div>
                     </div>
                 `;
             });
+
             html += `</div>`;
         });
 
         return html;
     };
 
-    this.setButtonPlusMinus = function (hashmap) {
-        $(document).off("click", ".plus-btn").on("click", ".plus-btn", function () {
-            const id = $(this).attr("id").replace("plus", "");
-            let q = hashmap.contains(id) ? hashmap.get(id) : 0;
-            q++;
-            hashmap.put(id, q);
-            $(`#quantita${id}`).text(q);
-            dataManager.saveInstanceHashmap(hashmap);
-        });
 
-        $(document).off("click", ".minus-btn").on("click", ".minus-btn", function () {
-            const id = $(this).attr("id").replace("minus", "");
-            if (hashmap.contains(id)) {
-                let q = hashmap.get(id);
-                q--;
-                if (q <= 0) {
-                    hashmap.remove(id);
-                    $(`#quantita${id}`).text(0);
-                } else {
+    // =============================================================
+    // BOTTONI + / −
+    // =============================================================
+    this.setButtonPlusMinus = function (hashmap) {
+
+        elencoPrincipale.forEach(cat => {
+            (elencoPietanze[cat] || []).forEach(p => {
+
+                const id = String(p.id);
+
+                $("#plus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q++;
+                    $("#quantita" + id).text(q);
                     hashmap.put(id, q);
-                    $(`#quantita${id}`).text(q);
-                }
-                dataManager.saveInstanceHashmap(hashmap);
-            }
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
+
+                $("#minus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q = Math.max(q - 1, 0);
+                    $("#quantita" + id).text(q);
+
+                    if (q === 0) hashmap.remove(id);
+                    else hashmap.put(id, q);
+
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
+            });
         });
     };
+
 
     // =============================================================
     // RESOCONTO
     // =============================================================
     this.popolaResoconto = function () {
+
         const hashmap = dataManager.getInstanceHashmap();
+        const ordine = hashmap.toObject();
+
+        if (Object.keys(ordine).length === 0) {
+            $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
+            return;
+        }
+
         let html = "";
         let totale = 0;
         let totaleQta = 0;
 
         elencoPrincipale.forEach(cat => {
-            const articoli = (elencoPietanze[cat] || []).filter(p => hashmap.contains(String(p.id)));
+
+            const articoli = (elencoPietanze[cat] || [])
+                .filter(p => ordine[String(p.id)] !== undefined);
+
             if (articoli.length === 0) return;
 
-            html += `<h3 class="categoria-resoconto">${cat}</h3>`;
+            html += `<h3>${cat}</h3>`;
+
             articoli.forEach(p => {
-                const q = hashmap.get(String(p.id));
-                const subtot = q * (Number(p.prezzo) || 0);
+                const id = String(p.id);
+                const q = ordine[id];
+                const prezzo = Number(p.prezzo) || 0;
+                const subtot = q * prezzo;
+
                 totale += subtot;
                 totaleQta += q;
 
                 html += `
-                    <div class="content-pietanza-riepilogo">
-                        <div class="left nome-pietanza">${p.descrizione}</div>
-                        <div class="center quantita-pietanza-riepilogo">x${q}</div>
+                    <div class="riga-resoconto">
+                        <div class="left">${p.descrizione}</div>
+                        <div class="center">x${q}</div>
                         <div class="right">${subtot.toFixed(2)} €</div>
                         <div class="endBlock"></div>
                     </div>
@@ -115,40 +141,15 @@ function GraphicManager() {
 
 
     // =============================================================
-    // QR CODE (Modificato con qr-code-styling)
+    // QR CODE
     // =============================================================
     this.popolaQRCode = function () {
         $("#qrcode").empty();
-        
-        // Recupera il testo dell'ordine formattato dal qrcodeManager
-        const testoOrdine = qrcodeManager.generaTestoOrdine();
-
-        const qrCode = new QRCodeStyling({
-            width: 280,
-            height: 280,
-            type: "svg",
-            data: testoOrdine,
-            dotsOptions: {
-                color: "#43b261", // Verde dal tuo CSS
-                type: "rounded"   // Punti arrotondati
-            },
-            backgroundOptions: {
-                color: "#ffffff",
-            },
-            cornersSquareOptions: {
-                color: "#178435", // Verde scuro dal tuo CSS
-                type: "extra-rounded" // Angoli dei quadrati arrotondati
-            },
-            cornersDotOptions: {
-                color: "#178435",
-                type: "dot"
-            },
-            qrOptions: {
-                errorCorrectionLevel: "Q"
-            }
+        new QRCode(document.getElementById("qrcode"), {
+            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            width: 256,
+            height: 256
         });
-
-        qrCode.append(document.getElementById("qrcode"));
     };
 
 
