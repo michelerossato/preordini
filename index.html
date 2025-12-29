@@ -1,123 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <title>Menu Digitale QR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- CSS jQuery Mobile -->
-    <link rel="stylesheet" href="preordini_lib/jquery/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="preordini_lib/themes/color-theme.min.css">
-    <link rel="stylesheet" href="preordini_lib/themes/jquery.mobile.icons.min.css">
-    <link rel="stylesheet" href="preordini_lib/util/css.css">
-
-    <!-- jQuery -->
-    <script src="preordini_lib/jquery/jquery-1.11.3.min.js"></script>
-
-    <!-- jQuery Mobile -->
-    <script src="preordini_lib/jquery/jquery.mobile-1.4.5.min.js"></script>
-
-    <!-- Cookie -->
-    <script src="preordini_lib/jquery/jquery.cookie.js"></script>
-
-    <!-- PapaParse CSV -->
     
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.min.css" />
+    <link rel="stylesheet" href="css.css" />
 
-    <!-- QRCode -->
-    <script src="preordini_lib/qrcode/qrcode.js"></script>
-    <script src="preordini_lib/qrcode/qrcodemanager.js"></script>
-
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 </head>
 
 <body>
 
-<!-- ============================================================
-     PAGINA PRINCIPALE
-============================================================= -->
-<div data-role="page" data-theme="b" id="pageprinc">
-
-    <div data-role="header">
-        <h1>Menù</h1>
-    </div>
-
-    <div data-role="main" class="ui-content">
-
-        <!-- ⚠️ QUI METTIAMO LA VERSIONE CORRETTA -->
-        <div id="lista" data-role="collapsible-set"></div>
-
-        <button class="ui-btn green-btn" id="resoconto-btn">Vedi resoconto</button>
-        <button class="ui-btn red-btn" id="elimina-ordine-btn">Elimina ordine</button>
-
-    </div>
-
-    <div data-role="popup" id="popup-ordine" data-position-to="window" data-transition="pop">
-        <div data-role="header">
-            <h1 id="title-popup"></h1>
+    <div data-role="page" id="pageprinc">
+        <div data-role="header" data-position="fixed">
+            <h1>Menu Ristorante</h1>
         </div>
 
-        <div data-role="main" class="ui-content" id="content-ordine-popup">
+        <div role="main" class="ui-content">
+            <div id="lista">
+                <p style="text-align:center;">Caricamento menu...</p>
+            </div>
+            
+            <button id="resoconto-btn" class="ui-btn green-btn">Vai al Resoconto</button>
+        </div>
+
+        <div data-role="popup" id="popup-ordine" data-overlay-theme="b" class="ui-content">
             <div id="info-ordine-popup"></div>
         </div>
     </div>
-</div>
 
+    <div data-role="page" id="pageres">
+        <div data-role="header">
+            <a href="#pageprinc" class="ui-btn ui-icon-arrow-l ui-btn-icon-notext ui-corner-all">Indietro</a>
+            <h1>Il tuo Ordine</h1>
+        </div>
 
-<!-- ============================================================
-     PAGINA RESOCONTO
-============================================================= -->
-<div data-role="page" data-theme="b" id="pageres">
+        <div role="main" class="ui-content">
+            <div id="resoconto">
+                </div>
 
-    <div data-role="header">
-        <h1>Riepilogo Ordine</h1>
+            <div class="ui-grid-a">
+                <div class="ui-block-a">
+                    <button id="modifica-btn" class="ui-btn ui-corner-all">Modifica</button>
+                </div>
+                <div class="ui-block-b">
+                    <button id="conferma-btn" class="ui-btn green-btn ui-corner-all">Conferma</button>
+                </div>
+            </div>
+            
+            <button id="elimina-ordine-btn" class="ui-btn ui-btn-b ui-corner-all">Elimina Ordine</button>
+        </div>
     </div>
 
-    <div data-role="main" class="ui-content">
-        <div id="resoconto"></div>
+    <div data-role="page" id="pageqrcode">
+        <div data-role="header">
+            <a href="#pageres" class="ui-btn ui-icon-arrow-l ui-btn-icon-notext ui-corner-all">Indietro</a>
+            <h1>Mostra in Cassa</h1>
+        </div>
 
-        <button class="ui-btn red-btn" id="modifica-btn">Modifica Ordine</button>
-        <button class="ui-btn green-btn" id="conferma-btn">Conferma Ordine</button>
+        <div role="main" class="ui-content" style="text-align: center;">
+            <h3>Grazie!</h3>
+            <p>Mostra questo codice al personale per completare l'ordine.</p>
+            
+            <div id="qrcode" style="display: inline-block; margin-top: 20px;"></div>
+
+            <br><br>
+            <button id="nuovo-ordine-btn" class="ui-btn ui-btn-b ui-corner-all">Inizia Nuovo Ordine</button>
+        </div>
     </div>
 
-    <div data-role="footer">
-        <h4>Giovani di Dese</h4>
-    </div>
-
-</div>
-
-
-<!-- ============================================================
-     PAGINA QR CODE
-============================================================= -->
-<div data-role="page" data-theme="b" id="pageqrcode">
-
-    <div data-role="header">
-        <h1>Ordine</h1>
-    </div>
-
-    <div data-role="main" class="ui-content" id="content-qrcode">
-
-        <h4>Presenta questo alla cassa e il tuo ordine sarà pronto</h4>
-
-        <div id="qrcode"></div>
-
-        <button class="ui-btn blue-btn" id="nuovo-ordine-btn">Nuovo Ordine</button>
-
-    </div>
-
-    <div data-role="footer">
-        <h4>Giovani di Dese</h4>
-    </div>
-
-</div>
-
-
-<!-- ============================================================
-     SCRIPT ORDINATI CORRETTAMENTE
-============================================================= -->
-<script src="preordini_lib/util/qrcode.min.js"></script>
-<script src="preordini_lib/util/hashmap.js"></script>
-<script src="preordini_lib/util/data.js"></script>
-<script src="preordini_lib/util/graphicManager.js"></script>
-<script src="preordini_lib/util/main.js"></script>
+    <script src="hashmap (1).js"></script>
+    <script src="QRCodeManager.js"></script>
+    <script src="graphicManager (1).js"></script>
+    <script src="data (1).js"></script>
+    <script src="main (1).js"></script>
 
 </body>
 </html>
