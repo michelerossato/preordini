@@ -6,7 +6,7 @@ function QRCodeManager() {
         var tavolo = $("#tavolo").val() || "0";
         var coperti = $("#coperti").val() || "1";
 
-        // Rimuoviamo i due punti e i simboli speciali che diventano 'ç' o 'ì'
+        // Costruiamo il testo usando solo SPAZI invece di DUE PUNTI
         var testo = "--- ORDINE GIOVANI DESE ---\n";
         testo += "NOME  " + nome.toUpperCase() + "\n";
         testo += "TAVOLO  " + tavolo + "\n";
@@ -30,17 +30,17 @@ function QRCodeManager() {
                 var subt = q * prezzo;
                 totale += subt;
 
-                // Pulizia nome piatto: togliamo accenti (es: acqua, ragu)
+                // PULIZIA TOTALE: Rimuoviamo accenti e simboli che causano errori (ç, ì, ò)
                 var desc = p.descrizione
                     .replace(/[àá]/g, "a")
                     .replace(/[èé]/g, "e")
                     .replace(/[ìí]/g, "i")
                     .replace(/[òó]/g, "o")
                     .replace(/[ùú]/g, "u")
-                    .replace(/[']/g, " ");
+                    .replace(/[’']/g, " ") // toglie apostrofi
+                    .replace(/[^a-zA-Z0-9 ]/g, " "); // rimuove tutto ciò che non è lettera o numero
 
-                // Usiamo spazi o trattini invece di : o =
-                testo += "- " + desc + " x" + q + "  " + subt.toFixed(2) + " EUR\n";
+                testo += "- " + desc.toUpperCase() + " x" + q + "  " + subt.toFixed(2) + " EUR\n";
             });
         });
 
@@ -51,16 +51,23 @@ function QRCodeManager() {
     };
 
     this.renderQRCode = function () {
-        var testo = this.generaTestoOrdine();
+        // Forza la codifica pulita
+        var testoGrezzo = this.generaTestoOrdine();
+        
+        // Funzione per forzare UTF-8 se il lettore è vecchio (opzionale)
+        function toUtf8(str) {
+            return unescape(encodeURIComponent(str));
+        }
+
         $("#qrcode").empty();
         
         new QRCode(document.getElementById("qrcode"), {
-            text: testo,
+            text: toUtf8(testoGrezzo),
             width: 256,
             height: 256,
             colorDark : "#000000",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.M // Livello medio per evitare che il QR diventi troppo denso
+            correctLevel : QRCode.CorrectLevel.M
         });
     };
 }
