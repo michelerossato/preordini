@@ -1,48 +1,168 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Menu Digitale QR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
-    <link rel="stylesheet" href="css.css" />
+function GraphicManager() {
 
-    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
-    <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
-    
-    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-</head>
+    // =============================================================
+    // GENERA MENU
+    // =============================================================
+    this.generateMenu = function (hashmap) {
 
-<body>
-    <div data-role="page" id="pageprinc">
-        <div data-role="header" data-position="fixed"><h1>Menu Ristorante</h1></div>
-        <div role="main" class="ui-content">
-            <div id="lista">Caricamento menu...</div>
-            <button id="resoconto-btn" class="ui-btn green-btn">Vai al Resoconto</button>
-        </div>
-    </div>
+        let html = `
+            <div class="form-ordine">
+                <input type="text" id="nomecliente" placeholder="Inserisci il tuo nome">
+                <input type="text" id="tavolo" placeholder="Numero tavolo">
+                <input type="number" id="coperti" placeholder="Quanti siete?" min="1">
+            </div>
+        `;
 
-    <div data-role="page" id="pageres">
-        <div data-role="header"><h1>Riepilogo</h1></div>
-        <div role="main" class="ui-content">
-            <div id="resoconto"></div>
-            <button id="conferma-btn" class="ui-btn green-btn">Conferma e Genera QR</button>
-        </div>
-    </div>
+        elencoPrincipale.forEach(cat => {
 
-    <div data-role="page" id="pageqrcode">
-        <div data-role="header"><h1>Ordine Pronto</h1></div>
-        <div role="main" class="ui-content" style="text-align: center;">
-            <div id="qrcode" style="display: inline-block; margin-top: 20px;"></div>
-            <button id="nuovo-ordine-btn" class="ui-btn ui-btn-b">Nuovo Ordine</button>
-        </div>
-    </div>
+            const articoli = elencoPietanze[cat] || [];
 
-    <script src="hashmap.js"></script>
-    <script src="QRCodeManager.js"></script>
-    <script src="graphicManager.js"></script>
-    <script src="data.js"></script>
-    <script src="main.js"></script>
-</body>
-</html>
+            html += `<div data-role="collapsible"><h4>${cat}</h4>`;
+
+            articoli.forEach(p => {
+
+                const id = String(p.id);   // 🔥 SEMPRE STRINGA
+                const nome = p.descrizione || p.nome || "";
+                const prezzo = Number(p.prezzo) || 0;
+                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
+
+                html += `
+                    <div class="content-pietanza-ordine">
+                        <div class="left nome-pietanza">${nome}</div>
+                        <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
+                        <div class="right controlli">
+                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
+                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
+                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
+                        </div>
+                        <div class="endBlock"></div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        });
+
+        return html;
+    };
+
+
+    // =============================================================
+    // BOTTONI + / −
+    // =============================================================
+    this.setButtonPlusMinus = function (hashmap) {
+
+        elencoPrincipale.forEach(cat => {
+            (elencoPietanze[cat] || []).forEach(p => {
+
+                const id = String(p.id);
+
+                $("#plus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q++;
+                    $("#quantita" + id).text(q);
+                    hashmap.put(id, q);
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
+
+                $("#minus" + id).off().on("click", function () {
+                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
+                    q = Math.max(q - 1, 0);
+                    $("#quantita" + id).text(q);
+
+                    if (q === 0) hashmap.remove(id);
+                    else hashmap.put(id, q);
+
+                    dataManager.saveInstanceHashmap(hashmap);
+                });
+            });
+        });
+    };
+
+
+    // =============================================================
+    // RESOCONTO
+    // =============================================================
+    this.popolaResoconto = function () {
+
+        const hashmap = dataManager.getInstanceHashmap();
+        const ordine = hashmap.toObject();
+
+        if (Object.keys(ordine).length === 0) {
+            $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
+            return;
+        }
+
+        let html = "";
+        let totale = 0;
+        let totaleQta = 0;
+
+        elencoPrincipale.forEach(cat => {
+
+            const articoli = (elencoPietanze[cat] || [])
+                .filter(p => ordine[String(p.id)] !== undefined);
+
+            if (articoli.length === 0) return;
+
+            html += `<h3>${cat}</h3>`;
+
+            articoli.forEach(p => {
+                const id = String(p.id);
+                const q = ordine[id];
+                const prezzo = Number(p.prezzo) || 0;
+                const subtot = q * prezzo;
+
+                totale += subtot;
+                totaleQta += q;
+
+                html += `
+                    <div class="riga-resoconto">
+                        <div class="left">${p.descrizione}</div>
+                        <div class="center">x${q}</div>
+                        <div class="right">${subtot.toFixed(2)} €</div>
+                        <div class="endBlock"></div>
+                    </div>
+                `;
+            });
+        });
+
+        html += `
+            <hr>
+            <div class="riga-resoconto totale">
+                <div class="left"><strong>Totale</strong></div>
+                <div class="center"><strong>${totaleQta}</strong></div>
+                <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
+                <div class="endBlock"></div>
+            </div>
+        `;
+
+        $("#resoconto").html(html);
+    };
+
+
+    // =============================================================
+    // QR CODE
+    // =============================================================
+    this.popolaQRCode = function () {
+        $("#qrcode").empty();
+        new QRCode(document.getElementById("qrcode"), {
+            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
+            width: 256,
+            height: 256
+        });
+    };
+
+
+    // =============================================================
+    // POPUP
+    // =============================================================
+    this.generatePopup = function () {
+        $("#info-ordine-popup").html(`
+            <p>Il tuo ordine è vuoto.</p>
+            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
+        `);
+        $("#ok-popup-btn").off().on("click", () => {
+            $("#popup-ordine").popup("close");
+        });
+    };
+}
