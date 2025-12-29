@@ -1,168 +1,122 @@
-function GraphicManager() {
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    // =============================================================
-    // GENERA MENU
-    // =============================================================
-    this.generateMenu = function (hashmap) {
+    <!-- CSS jQuery Mobile -->
+    <link rel="stylesheet" href="preordini_lib/jquery/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="preordini_lib/themes/color-theme.min.css">
+    <link rel="stylesheet" href="preordini_lib/themes/jquery.mobile.icons.min.css">
+    <link rel="stylesheet" href="preordini_lib/util/css.css">
 
-        let html = `
-            <div class="form-ordine">
-                <input type="text" id="nomecliente" placeholder="Inserisci il tuo nome">
-                <input type="text" id="tavolo" placeholder="Numero tavolo">
-                <input type="number" id="coperti" placeholder="Quanti siete?" min="1">
-            </div>
-        `;
+    <!-- jQuery -->
+    <script src="preordini_lib/jquery/jquery-1.11.3.min.js"></script>
 
-        elencoPrincipale.forEach(cat => {
+    <!-- jQuery Mobile -->
+    <script src="preordini_lib/jquery/jquery.mobile-1.4.5.min.js"></script>
 
-            const articoli = elencoPietanze[cat] || [];
+    <!-- Cookie -->
+    <script src="preordini_lib/jquery/jquery.cookie.js"></script>
 
-            html += `<div data-role="collapsible"><h4>${cat}</h4>`;
+    <!-- PapaParse CSV -->
+    
 
-            articoli.forEach(p => {
+    <!-- QRCode -->
+    <script src="preordini_lib/qrcode/qrcode.js"></script>
+    <script src="preordini_lib/qrcode/qrcodemanager.js"></script>
 
-                const id = String(p.id);   // 🔥 SEMPRE STRINGA
-                const nome = p.descrizione || p.nome || "";
-                const prezzo = Number(p.prezzo) || 0;
-                const quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
+</head>
 
-                html += `
-                    <div class="content-pietanza-ordine">
-                        <div class="left nome-pietanza">${nome}</div>
-                        <div class="center prezzo-pietanza-ordine">${prezzo.toFixed(2)} €</div>
-                        <div class="right controlli">
-                            <button class="ui-btn brown-btn minus-btn" id="minus${id}">−</button>
-                            <span id="quantita${id}" class="quantita-span">${quantita}</span>
-                            <button class="ui-btn brown-btn plus-btn" id="plus${id}">+</button>
-                        </div>
-                        <div class="endBlock"></div>
-                    </div>
-                `;
-            });
+<body>
 
-            html += `</div>`;
-        });
+<!-- ============================================================
+     PAGINA PRINCIPALE
+============================================================= -->
+<div data-role="page" data-theme="b" id="pageprinc">
 
-        return html;
-    };
+    <div data-role="header">
+        <h1>Menù</h1>
+    </div>
 
+    <div data-role="main" class="ui-content">
 
-    // =============================================================
-    // BOTTONI + / −
-    // =============================================================
-    this.setButtonPlusMinus = function (hashmap) {
+        <!-- ⚠️ QUI METTIAMO LA VERSIONE CORRETTA -->
+        <div id="lista" data-role="collapsible-set"></div>
 
-        elencoPrincipale.forEach(cat => {
-            (elencoPietanze[cat] || []).forEach(p => {
+        <button class="ui-btn green-btn" id="resoconto-btn">Vedi resoconto</button>
+        <button class="ui-btn red-btn" id="elimina-ordine-btn">Elimina ordine</button>
 
-                const id = String(p.id);
+    </div>
 
-                $("#plus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
-                    q++;
-                    $("#quantita" + id).text(q);
-                    hashmap.put(id, q);
-                    dataManager.saveInstanceHashmap(hashmap);
-                });
+    <div data-role="popup" id="popup-ordine" data-position-to="window" data-transition="pop">
+        <div data-role="header">
+            <h1 id="title-popup"></h1>
+        </div>
 
-                $("#minus" + id).off().on("click", function () {
-                    let q = parseInt($("#quantita" + id).text(), 10) || 0;
-                    q = Math.max(q - 1, 0);
-                    $("#quantita" + id).text(q);
-
-                    if (q === 0) hashmap.remove(id);
-                    else hashmap.put(id, q);
-
-                    dataManager.saveInstanceHashmap(hashmap);
-                });
-            });
-        });
-    };
+        <div data-role="main" class="ui-content" id="content-ordine-popup">
+            <div id="info-ordine-popup"></div>
+        </div>
+    </div>
+</div>
 
 
-    // =============================================================
-    // RESOCONTO
-    // =============================================================
-    this.popolaResoconto = function () {
+<!-- ============================================================
+     PAGINA RESOCONTO
+============================================================= -->
+<div data-role="page" data-theme="b" id="pageres">
 
-        const hashmap = dataManager.getInstanceHashmap();
-        const ordine = hashmap.toObject();
+    <div data-role="header">
+        <h1>Riepilogo Ordine</h1>
+    </div>
 
-        if (Object.keys(ordine).length === 0) {
-            $("#resoconto").html("<p>Il tuo ordine è vuoto</p>");
-            return;
-        }
+    <div data-role="main" class="ui-content">
+        <div id="resoconto"></div>
 
-        let html = "";
-        let totale = 0;
-        let totaleQta = 0;
+        <button class="ui-btn red-btn" id="modifica-btn">Modifica Ordine</button>
+        <button class="ui-btn green-btn" id="conferma-btn">Conferma Ordine</button>
+    </div>
 
-        elencoPrincipale.forEach(cat => {
+    <div data-role="footer">
+        <h4>Giovani di Dese</h4>
+    </div>
 
-            const articoli = (elencoPietanze[cat] || [])
-                .filter(p => ordine[String(p.id)] !== undefined);
-
-            if (articoli.length === 0) return;
-
-            html += `<h3>${cat}</h3>`;
-
-            articoli.forEach(p => {
-                const id = String(p.id);
-                const q = ordine[id];
-                const prezzo = Number(p.prezzo) || 0;
-                const subtot = q * prezzo;
-
-                totale += subtot;
-                totaleQta += q;
-
-                html += `
-                    <div class="riga-resoconto">
-                        <div class="left">${p.descrizione}</div>
-                        <div class="center">x${q}</div>
-                        <div class="right">${subtot.toFixed(2)} €</div>
-                        <div class="endBlock"></div>
-                    </div>
-                `;
-            });
-        });
-
-        html += `
-            <hr>
-            <div class="riga-resoconto totale">
-                <div class="left"><strong>Totale</strong></div>
-                <div class="center"><strong>${totaleQta}</strong></div>
-                <div class="right"><strong>${totale.toFixed(2)} €</strong></div>
-                <div class="endBlock"></div>
-            </div>
-        `;
-
-        $("#resoconto").html(html);
-    };
+</div>
 
 
-    // =============================================================
-    // QR CODE
-    // =============================================================
-    this.popolaQRCode = function () {
-        $("#qrcode").empty();
-        new QRCode(document.getElementById("qrcode"), {
-            text: JSON.stringify(dataManager.getInstanceHashmap().toObject()),
-            width: 256,
-            height: 256
-        });
-    };
+<!-- ============================================================
+     PAGINA QR CODE
+============================================================= -->
+<div data-role="page" data-theme="b" id="pageqrcode">
+
+    <div data-role="header">
+        <h1>Ordine</h1>
+    </div>
+
+    <div data-role="main" class="ui-content" id="content-qrcode">
+
+        <h4>Presenta questo alla cassa e il tuo ordine sarà pronto</h4>
+
+        <div id="qrcode"></div>
+
+        <button class="ui-btn blue-btn" id="nuovo-ordine-btn">Nuovo Ordine</button>
+
+    </div>
+
+    <div data-role="footer">
+        <h4>Giovani di Dese</h4>
+    </div>
+
+</div>
 
 
-    // =============================================================
-    // POPUP
-    // =============================================================
-    this.generatePopup = function () {
-        $("#info-ordine-popup").html(`
-            <p>Il tuo ordine è vuoto.</p>
-            <button class="ui-btn green-btn" id="ok-popup-btn">OK</button>
-        `);
-        $("#ok-popup-btn").off().on("click", () => {
-            $("#popup-ordine").popup("close");
-        });
-    };
-}
+<!-- ============================================================
+     SCRIPT ORDINATI CORRETTAMENTE
+============================================================= -->
+<script src="preordini_lib/util/hashmap.js"></script>
+<script src="preordini_lib/util/data.js"></script>
+<script src="preordini_lib/util/graphicManager.js"></script>
+<script src="preordini_lib/util/main.js"></script>
+
+</body>
+</html>
