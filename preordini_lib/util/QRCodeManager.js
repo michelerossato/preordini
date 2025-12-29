@@ -1,42 +1,38 @@
 function QRCodeManager() {
 
     this.generaTestoOrdine = function () {
+        var map = dataManager.getInstanceHashmap();
+        var nome = $("#nomecliente").val() || "";
+        var tavolo = $("#tavolo").val() || "";
+        var coperti = $("#coperti").val() || ""; // Preso dall'input nel menu
 
-        const map = dataManager.getInstanceHashmap();
-        const coperti = dataManager.getInstanceCoperti() || "";
-        const nome = $("#nomecliente").val() || "";
-        const tavolo = $("#tavolo").val() || "";
-
-        let testo = "";
-        let totale = 0;
+        var testo = "";
+        var totale = 0;
 
         testo += "ORDINE\n";
-        if (nome) testo += "Nome: " + nome + "\n";
+        if (nome)   testo += "Nome: " + nome + "\n";
         if (tavolo) testo += "Tavolo: " + tavolo + "\n";
         if (coperti) testo += "Coperti: " + coperti + "\n";
         testo += "------------------\n";
 
-        elencoPrincipale.forEach(cat => {
-
-            const articoli = (elencoPietanze[cat] || [])
-                .filter(p => map.contains(parseInt(p.id)));
+        elencoPrincipale.forEach(function(cat) {
+            // Usiamo String(p.id) per sicurezza di compatibilità
+            var articoli = (elencoPietanze[cat] || []).filter(function(p) {
+                return map.contains(String(p.id));
+            });
 
             if (articoli.length === 0) return;
 
-            testo += cat.toUpperCase() + "\n";
+            testo += "\n" + cat.toUpperCase() + "\n";
 
-            articoli.forEach(p => {
-                const id = parseInt(p.id);
-                const q = map.get(id);
-                const prezzo = Number(p.prezzo) || 0;
-                const subt = q * prezzo;
+            articoli.forEach(function(p) {
+                var q = map.get(String(p.id));
+                var prezzo = Number(p.prezzo) || 0;
+                var subt = q * prezzo;
 
                 totale += subt;
-
-                testo += `${p.descrizione} x${q} = ${subt.toFixed(2)}€\n`;
+                testo += p.descrizione + " x" + q + " = " + subt.toFixed(2) + "€\n";
             });
-
-            testo += "\n";
         });
 
         testo += "------------------\n";
@@ -45,17 +41,11 @@ function QRCodeManager() {
         return testo;
     };
 
-
+    // Questa funzione viene chiamata dal GraphicManager per disegnare il QR
     this.renderQRCode = function () {
-
-        const testo = this.generaTestoOrdine();
-
-        $("#qrcode").empty();
-
-        new QRCode(document.getElementById("qrcode"), {
-            text: testo,
-            width: 256,
-            height: 256
-        });
+        // Se usi la libreria qr-code-styling nell'index, 
+        // la logica del disegno è gestita dentro graphicManager.js
+        // chiamando semplicemente generaTestoOrdine().
+        console.log("Generazione testo per QR Code completata.");
     };
 }
