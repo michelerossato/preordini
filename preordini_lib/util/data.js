@@ -11,7 +11,7 @@ function popolaMenuDaCSV() {
         jsonp: "callback",
         jsonpCallback: "callback",
         success: function (data) {
-            // 🔥 FILTRO: Esclude articoli se id manca o se disponibilita è "0"
+            // Filtro: ID presente, Categoria presente e disponibilita NON uguale a 0
             const raw = data.filter(r => {
                 const idValido = r.id && String(r.CAT).trim();
                 const disponibile = String(r.disponibilita) !== "0"; 
