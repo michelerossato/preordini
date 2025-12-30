@@ -1,16 +1,17 @@
 function GraphicManager() {
-
     this.generateMenu = function (hashmap) {
         var html = '<div class="form-ordine">' +
                    '<input type="text" id="nomecliente" placeholder="Inserisci il tuo nome">' +
                    '<input type="text" id="tavolo" placeholder="Numero tavolo">' +
+                   '<input type="number" id="coperti" placeholder="Quanti siete?" min="1">' +
                    '</div>';
 
         elencoPrincipale.forEach(function(cat) {
             var articoli = elencoPietanze[cat] || [];
             html += '<div data-role="collapsible"><h4>' + cat + '</h4>';
+
             articoli.forEach(function(p) {
-                var id = String(p.id);
+                var id = String(p.ID); // Usiamo ID del record
                 var nome = p.descrizione || "";
                 var prezzo = Number(p.prezzo) || 0;
                 var quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
@@ -36,7 +37,7 @@ function GraphicManager() {
             var q = hashmap.contains(id) ? hashmap.get(id) : 0;
             q = isPlus ? q + 1 : Math.max(0, q - 1);
             if (q === 0) hashmap.remove(id); else hashmap.put(id, q);
-            $(`#quantita${id}`).text(q);
+            $("#quantita" + id).text(q);
             dataManager.saveInstanceHashmap(hashmap);
         });
     };
@@ -45,11 +46,11 @@ function GraphicManager() {
         var hashmap = dataManager.getInstanceHashmap();
         var html = "";
         elencoPrincipale.forEach(function(cat) {
-            var articoli = (elencoPietanze[cat] || []).filter(function(p) { return hashmap.contains(String(p.id)); });
+            var articoli = (elencoPietanze[cat] || []).filter(function(p) { return hashmap.contains(String(p.ID)); });
             if (articoli.length > 0) {
                 html += '<h3>' + cat + '</h3>';
                 articoli.forEach(function(p) {
-                    html += '<p>' + p.descrizione + ' x ' + hashmap.get(String(p.id)) + '</p>';
+                    html += '<p>' + p.descrizione + ' x ' + hashmap.get(String(p.ID)) + '</p>';
                 });
             }
         });
@@ -58,13 +59,11 @@ function GraphicManager() {
 
     this.popolaQRCode = function () {
         $("#qrcode").empty();
-        // USA IL TESTO LEGGIBILE PER IL RISTORATORE
-        var testoOrdine = qrcodeManager.generaTestoOrdine();
-
+        var testoCodificato = qrcodeManager.generaTestoOrdine();
         var qrCode = new QRCodeStyling({
-            width: 280,
-            height: 280,
-            data: testoOrdine,
+            width: 300,
+            height: 300,
+            data: testoCodificato,
             dotsOptions: { color: "#43b261", type: "rounded" },
             cornersSquareOptions: { color: "#178435", type: "extra-rounded" }
         });
