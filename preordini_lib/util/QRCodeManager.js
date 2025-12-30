@@ -2,72 +2,64 @@ function QRCodeManager() {
 
     this.generaTestoOrdine = function () {
         var map = dataManager.getInstanceHashmap();
-        var nome = $("#nomecliente").val() || "cliente";
-        var tavolo = $("#tavolo").val() || "0";
-        var coperti = $("#coperti").val() || "1";
+        var nome = $("#nomecliente").val() || "";
+        var tavolo = $("#tavolo").val() || "";
+        var coperti = $("#coperti").val() || "";
 
-        // Costruiamo il testo usando solo SPAZI invece di DUE PUNTI
-        var testo = "--- ORDINE GIOVANI DESE ---\n";
-        testo += "NOME  " + nome.toUpperCase() + "\n";
-        testo += "TAVOLO  " + tavolo + "\n";
-        testo += "COPERTI  " + coperti + "\n";
-        testo += "---------------------------\n";
+        // Creazione dell'oggetto ordine con la struttura richiesta
+        var ordineOggetto = {
+            numeroTavolo: tavolo,
+            cliente: nome,
+            coperti: coperti,
+            righe: []
+        };
 
-        var totale = 0;
-
+        // Cicliamo le categorie e i piatti
         elencoPrincipale.forEach(function(cat) {
             var articoli = (elencoPietanze[cat] || []).filter(function(p) {
-                return map.contains(String(p.id));
+                // Verifichiamo la presenza in mappa usando l'ID del record
+                return map.contains(String(p.ID)); 
             });
 
-            if (articoli.length === 0) return;
-
-            testo += "\n" + cat.toUpperCase() + "\n";
-
             articoli.forEach(function(p) {
-                var q = map.get(String(p.id));
-                var prezzo = Number(p.prezzo) || 0;
-                var subt = q * prezzo;
-                totale += subt;
-
-                // PULIZIA TOTALE: Rimuoviamo accenti e simboli che causano errori (ç, ì, ò)
-                var desc = p.descrizione
-                    .replace(/[àá]/g, "a")
-                    .replace(/[èé]/g, "e")
-                    .replace(/[ìí]/g, "i")
-                    .replace(/[òó]/g, "o")
-                    .replace(/[ùú]/g, "u")
-                    .replace(/[’']/g, " ") // toglie apostrofi
-                    .replace(/[^a-zA-Z0-9 ]/g, " "); // rimuove tutto ciò che non è lettera o numero
-
-                testo += "- " + desc.toUpperCase() + " x" + q + "  " + subt.toFixed(2) + " EUR\n";
+                ordineOggetto.righe.push({
+                    id: parseInt(p.ID), // Usiamo il campo ID del menuweb
+                    qta: parseInt(map.get(String(p.ID)))
+                });
             });
         });
 
-        testo += "\n---------------------------\n";
-        testo += "TOTALE  " + totale.toFixed(2) + " EUR";
+        // Trasformazione in JSON e codifica URL (per ottenere %7B, %22, ecc.)
+        var jsonString = JSON.stringify(ordineOggetto);
+        var encodedString = encodeURIComponent(jsonString);
 
-        return testo;
+        return encodedString;
     };
 
     this.renderQRCode = function () {
-        // Forza la codifica pulita
-        var testoGrezzo = this.generaTestoOrdine();
+        var testoCodificato = this.generaTestoOrdine();
         
-        // Funzione per forzare UTF-8 se il lettore è vecchio (opzionale)
-        function toUtf8(str) {
-            return unescape(encodeURIComponent(str));
-        }
-
         $("#qrcode").empty();
         
-        new QRCode(document.getElementById("qrcode"), {
-            text: toUtf8(testoGrezzo),
-            width: 256,
-            height: 256,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.M
+        // Generazione del QR Code tecnico
+        var qrCode = new QRCodeStyling({
+            width: 280,
+            height: 280,
+            type: "svg",
+            data: testoCodificato,
+            dotsOptions: {
+                color: "#43b261",
+                type: "rounded"
+            },
+            cornersSquareOptions: {
+                color: "#178435",
+                type: "extra-rounded"
+            },
+            backgroundOptions: {
+                color: "#ffffff",
+            }
         });
+        
+        qrCode.append(document.getElementById("qrcode"));
     };
 }
