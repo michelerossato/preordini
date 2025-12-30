@@ -10,7 +10,7 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
             const articoli = elencoPietanze[cat] || [];
-            if (articoli.length === 0) return; // Salta categorie senza articoli disponibili
+            if (articoli.length === 0) return; 
 
             html += `<div data-role="collapsible"><h4>${cat}</h4>`;
             articoli.forEach(p => {
@@ -44,19 +44,39 @@ function GraphicManager() {
         });
     };
 
+    // AGGIORNATO: Ora calcola il totale Euro
     this.popolaResoconto = function () {
         const hashmap = dataManager.getInstanceHashmap();
-        let html = `<h3>Riepilogo</h3><p>Nome: ${$("#nomecliente").val()}<br>Tavolo: ${$("#tavolo").val()}<br>Persone: ${$("#coperti").val()}</p><hr>`;
+        let html = `<h3>Riepilogo Ordine</h3>
+                    <p><b>Nome:</b> ${$("#nomecliente").val()}<br>
+                    <b>Tavolo:</b> ${$("#tavolo").val()}<br>
+                    <b>Persone:</b> ${$("#coperti").val()}</p><hr>`;
         
+        let totaleComplessivo = 0;
+
         elencoPrincipale.forEach(cat => {
-            const articoli = (elencoPietanze[cat] || []).filter(p => hashmap.contains(String(p.id)));
-            if (articoli.length > 0) {
-                html += `<b>${cat}</b>`;
-                articoli.forEach(p => {
-                    html += `<p>${p.descrizione} x ${hashmap.get(String(p.id))}</p>`;
+            const articoliOrdinati = (elencoPietanze[cat] || []).filter(p => hashmap.contains(String(p.id)));
+            
+            if (articoliOrdinati.length > 0) {
+                html += `<div style="background:#444; padding:5px; margin-top:10px;"><b>${cat}</b></div>`;
+                articoliOrdinati.forEach(p => {
+                    const qta = hashmap.get(String(p.id));
+                    const prezzoUnitario = Number(p.prezzo) || 0;
+                    const subTotale = qta * prezzoUnitario;
+                    totaleComplessivo += subTotale;
+
+                    html += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #555;">
+                                <span>${p.descrizione} x ${qta}</span>
+                                <span>${subTotale.toFixed(2)} €</span>
+                             </div>`;
                 });
             }
         });
+
+        html += `<hr><div style="text-align:right; font-size:1.2em; margin-top:10px;">
+                    <strong>TOTALE ORDINE: ${totaleComplessivo.toFixed(2)} €</strong>
+                 </div>`;
+        
         $("#resoconto").html(html);
     };
 
