@@ -5,7 +5,6 @@ function QRCodeManager() {
         var tavolo = $("#tavolo").val() || "";
         var coperti = $("#coperti").val() || "";
 
-        // Struttura JSON richiesta
         var ordineOggetto = {
             numeroTavolo: tavolo,
             cliente: nome,
@@ -13,24 +12,20 @@ function QRCodeManager() {
             righe: []
         };
 
+        // Prende i dati dalle variabili globali popolate da data.js
         elencoPrincipale.forEach(function(cat) {
-            var articoli = (elencoPietanze[cat] || []).filter(function(p) {
-                return map.contains(String(p.ID)); 
-            });
-
-            articoli.forEach(function(p) {
-                ordineOggetto.righe.push({
-                    id: parseInt(p.ID),
-                    qta: parseInt(map.get(String(p.ID)))
-                });
+            (elencoPietanze[cat] || []).forEach(function(p) {
+                var idStr = String(p.id);
+                if (map.contains(idStr)) {
+                    ordineOggetto.righe.push({
+                        id: parseInt(p.id),
+                        qta: map.get(idStr)
+                    });
+                }
             });
         });
 
-        // Trasformazione in stringa JSON e codifica URL
+        // Restituisce la stringa codificata per il QR
         return encodeURIComponent(JSON.stringify(ordineOggetto));
-    };
-
-    this.renderQRCode = function () {
-        // La logica di disegno è gestita in graphicManager tramite QRCodeStyling
     };
 }
