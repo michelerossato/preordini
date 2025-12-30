@@ -44,9 +44,6 @@ function GraphicManager() {
         });
     };
 
-    // =============================================================
-    // FUNZIONE RESOCONTO AGGIORNATA CON TOTALE
-    // =============================================================
     this.popolaResoconto = function () {
         const hashmap = dataManager.getInstanceHashmap();
         let html = `<h3>Riepilogo Ordine</h3>
@@ -58,7 +55,6 @@ function GraphicManager() {
 
         elencoPrincipale.forEach(cat => {
             const articoliInCategoria = (elencoPietanze[cat] || []);
-            // Filtriamo solo quelli che hanno una quantità > 0 nella hashmap
             const ordinati = articoliInCategoria.filter(p => hashmap.contains(String(p.id)));
 
             if (ordinati.length > 0) {
@@ -78,13 +74,23 @@ function GraphicManager() {
             }
         });
 
+        // Blocco Totale ben visibile
         html += `
-            <div style="margin-top:20px; padding:10px; background:#333; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:1.2em;">TOTALE</span>
+            <div style="margin-top:20px; padding:15px; background:#333; border-radius:5px; display:flex; justify-content:space-between; align-items:center; border: 2px solid #43b261;">
+                <span style="font-size:1.2em; font-weight:bold;">TOTALE</span>
                 <span style="font-size:1.5em; color:#43b261; font-weight:bold;">${totaleEuro.toFixed(2)} €</span>
-            </div>`;
+            </div>
+            <div style="height:20px;"></div>`; // Spazio extra in fondo
         
+        // Inserisce l'HTML
         $("#resoconto").html(html);
+
+        // FORZA IL REFRESH DI JQUERY MOBILE
+        // Questo risolve il problema della visibilità
+        $("#pageres").trigger("create");
+        
+        // Scorri in alto per vedere l'inizio del resoconto
+        $.mobile.silentScroll(0);
     };
 
     this.popolaQRCode = function () {
