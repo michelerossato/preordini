@@ -1,72 +1,98 @@
+// ======================================================================
+//  VARIABILI GLOBALI PER MENU
+// ======================================================================
 var elencoPrincipale = [];
+var categorie = [];
 var elencoPietanze = {};
 
-function DataManager() {
-    this.caricaDati = function() {
-        var urlWebApp = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
-        console.log("Tentativo caricamento JSONP da Google...");
+// ======================================================================
+//  CARICAMENTO JSONP DA APPS SCRIPT (SOLUZIONE CORS)
+// ======================================================================
+function popolaMenuDaCSV() {
 
-        $.ajax({
-            url: urlWebApp,
-            dataType: "jsonp",
-            jsonpCallback: "callback", // Obbligatorio perché il tuo script risponde con 'callback(...)'
-            success: function(data) {
-                console.log("Dati ricevuti con successo:", data);
-                
-                // Reset per evitare duplicati
-                elencoPrincipale = [];
-                elencoPietanze = {};
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
-                data.forEach(function(riga) {
-                    var categoria = riga.CAT; 
-                    var pietanza = {
-                        ID: riga.id,
-                        descrizione: riga.descrizione,
-                        prezzo: riga.prezzo
+    $.ajax({
+        url: API_URL,
+        dataType: "jsonp",
+        jsonp: "callback",     // <-- Google Apps Script vuole *esattamente* questo
+        jsonpCallback: "callback", // <-- deve combaciare con il default del tuo script
+
+        success: function (data) {
+
+            console.log("✔ Dati API caricati:", data);
+
+            const raw = data.filter(r => r.id && String(r.CAT).trim());
+
+            const categorieMap = {};
+
+            raw.forEach(r => {
+                const cat = String(r.CAT).trim();
+
+                if (!categorieMap[cat]) {
+                    categorieMap[cat] = {
+                        descrizione: cat,
+                        articoli: []
                     };
-
-                    if (!elencoPietanze[categoria]) {
-                        elencoPietanze[categoria] = [];
-                        elencoPrincipale.push(categoria);
-                    }
-                    elencoPietanze[categoria].push(pietanza);
-                });
-
-                $(document).trigger("datiPronti");
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("Errore AJAX:", textStatus, errorThrown);
-                alert("Errore nel caricamento del menù da Google. Verifica la connessione.");
-            }
-        });
-    };
-
-    this.saveInstanceHashmap = function(hashmap) {
-        var str = "";
-        hashmap.keys().forEach(function(key) { str += key + ":" + hashmap.get(key) + ";"; });
-        $.cookie("ordine_hashmap", str, { expires: 1 });
-    };
-
-    this.getInstanceHashmap = function() {
-        var hashmap = new HashMap();
-        var cookie = $.cookie("ordine_hashmap");
-        if (cookie) {
-            cookie.split(";").forEach(function(item) {
-                if (item) {
-                    var parts = item.split(":");
-                    hashmap.put(parts[0], parseInt(parts[1]));
                 }
-            });
-        }
-        return hashmap;
-    };
 
-    this.eliminaOrdine = function() {
-        $.removeCookie("ordine_hashmap");
-        location.reload();
-    };
+                r.id = parseInt(r.id, 10) || 0;
+                r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
+                r.nome = r.descrizione;
+
+                categorieMap[cat].articoli.push(r);
+            });
+
+            categorie = Object.values(categorieMap);
+            elencoPrincipale = categorie.map(c => c.descrizione);
+
+            elencoPietanze = {};
+            categorie.forEach(c => elencoPietanze[c.descrizione] = c.articoli);
+
+            console.log("✔ Menu caricato con successo:", elencoPrincipale);
+
+            if (typeof avviaApplicazione === "function") {
+                avviaApplicazione();
+            }
+        },
+
+        error: function (xhr, status, error) {
+            console.error("❌ Errore JSONP:", status, error);
+        }
+    });
 }
 
-var dataManager = new DataManager();
-dataManager.caricaDati();
+popolaMenuDaCSV();
+
+
+// ======================================================================
+//  CLASSE DATA
+// ======================================================================
+function Data() {
+
+    this.getInstanceHashmap = function () {
+        var saved = $.cookie("hashmap");
+        if (!saved) return new HashMap();
+
+        try {
+            var obj = JSON.parse(saved);
+            return HashMap.fromObject(obj);
+        } catch (e) {
+            console.error("Errore lettura cookie:", e);
+            return new HashMap();
+        }
+    };
+
+    this.saveInstanceHashmap = function (map) {
+        $.cookie("hashmap", JSON.stringify(map.toObject()), { expires: 1 });
+    };
+
+    this.getInstanceCoperti = function () {
+        return $.cookie("coperti") || "";
+    };
+
+    this.saveInstanceCoperti = function (v) {
+        $.cookie("coperti", v, { expires: 1 });
+    };
+}
