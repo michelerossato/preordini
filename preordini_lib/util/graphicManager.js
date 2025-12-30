@@ -53,7 +53,8 @@ function GraphicManager() {
     this.popolaResoconto = function () {
         const hashmap = dataManager.getInstanceHashmap();
         const ordine = hashmap.toObject();
-        let html = `<h3>Dati: ${$("#nomecliente").val()} - Tavolo: ${$("#tavolo").val()} - Persone: ${$("#coperti").val()}</h3>`;
+        let html = `<h3>Riepilogo: ${$("#nomecliente").val()}</h3>`;
+        html += `<p>Tavolo: ${$("#tavolo").val()} - Persone: ${$("#coperti").val()}</p><hr>`;
         let totale = 0;
 
         elencoPrincipale.forEach(cat => {
@@ -72,7 +73,9 @@ function GraphicManager() {
 
     this.popolaQRCode = function () {
         $("#qrcode").empty();
+        // Recupera la stringa codificata dal manager
         const testoCodificato = qrcodeManager.generaTestoOrdine();
+        
         const qrCode = new QRCodeStyling({
             width: 280,
             height: 280,
