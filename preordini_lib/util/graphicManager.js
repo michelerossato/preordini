@@ -1,29 +1,33 @@
 function GraphicManager() {
     this.generateMenu = function (hashmap) {
-        var html = '<div class="form-ordine">' +
+        // Form iniziale con Nome, Tavolo e Quanti siete
+        var html = '<div class="form-ordine" style="padding: 10px; background: #333; border-radius: 8px; margin-bottom: 15px;">' +
+                   '<label for="nomecliente">Nome:</label>' +
                    '<input type="text" id="nomecliente" placeholder="Inserisci il tuo nome">' +
+                   '<label for="tavolo">Tavolo:</label>' +
                    '<input type="text" id="tavolo" placeholder="Numero tavolo">' +
-                   '<input type="number" id="coperti" placeholder="Quanti siete?" min="1">' +
+                   '<label for="coperti">Quanti siete?:</label>' +
+                   '<input type="number" id="coperti" placeholder="Numero persone" min="1">' +
                    '</div>';
 
         elencoPrincipale.forEach(function(cat) {
             var articoli = elencoPietanze[cat] || [];
             html += '<div data-role="collapsible"><h4>' + cat + '</h4>';
-
+            
             articoli.forEach(function(p) {
-                var id = String(p.ID); // Usiamo ID del record
+                var id = String(p.ID); // ID del record menuweb
                 var nome = p.descrizione || "";
                 var prezzo = Number(p.prezzo) || 0;
-                var quantita = hashmap.contains(id) ? hashmap.get(id) : 0;
+                var qta = hashmap.contains(id) ? hashmap.get(id) : 0;
 
-                html += '<div class="content-pietanza-ordine">' +
-                        '<div class="left">' + nome + '</div>' +
-                        '<div class="center">' + prezzo.toFixed(2) + ' €</div>' +
-                        '<div class="right">' +
-                        '<button class="minus-btn" id="minus' + id + '">−</button>' +
-                        '<span id="quantita' + id + '">' + quantita + '</span>' +
-                        '<button class="plus-btn" id="plus' + id + '">+</button>' +
-                        '</div><div class="endBlock"></div></div>';
+                html += '<div class="content-pietanza-ordine" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">' +
+                        '<div style="flex: 2;">' + nome + '</div>' +
+                        '<div style="flex: 1; text-align: center;">' + prezzo.toFixed(2) + ' €</div>' +
+                        '<div style="flex: 1; display: flex; align-items: center; justify-content: flex-end;">' +
+                        '<button class="minus-btn ui-btn ui-btn-inline ui-corner-all" id="minus' + id + '">−</button>' +
+                        '<span id="quantita' + id + '" style="margin: 0 10px;">' + qta + '</span>' +
+                        '<button class="plus-btn ui-btn ui-btn-inline ui-corner-all" id="plus' + id + '">+</button>' +
+                        '</div></div>';
             });
             html += '</div>';
         });
@@ -44,25 +48,29 @@ function GraphicManager() {
 
     this.popolaResoconto = function () {
         var hashmap = dataManager.getInstanceHashmap();
-        var html = "";
+        var html = "<h3>Riepilogo Dati:</h3>";
+        html += "<p><b>Nome:</b> " + $("#nomecliente").val() + "</p>";
+        html += "<p><b>Tavolo:</b> " + $("#tavolo").val() + "</p>";
+        html += "<p><b>Persone:</b> " + $("#coperti").val() + "</p><hr>";
+
         elencoPrincipale.forEach(function(cat) {
             var articoli = (elencoPietanze[cat] || []).filter(function(p) { return hashmap.contains(String(p.ID)); });
             if (articoli.length > 0) {
-                html += '<h3>' + cat + '</h3>';
+                html += '<h4>' + cat + '</h4>';
                 articoli.forEach(function(p) {
                     html += '<p>' + p.descrizione + ' x ' + hashmap.get(String(p.ID)) + '</p>';
                 });
             }
         });
-        $("#resoconto").html(html || "<p>Ordine vuoto</p>");
+        $("#resoconto").html(html);
     };
 
     this.popolaQRCode = function () {
         $("#qrcode").empty();
         var testoCodificato = qrcodeManager.generaTestoOrdine();
         var qrCode = new QRCodeStyling({
-            width: 300,
-            height: 300,
+            width: 250,
+            height: 250,
             data: testoCodificato,
             dotsOptions: { color: "#43b261", type: "rounded" },
             cornersSquareOptions: { color: "#178435", type: "extra-rounded" }
@@ -70,3 +78,4 @@ function GraphicManager() {
         qrCode.append(document.getElementById("qrcode"));
     };
 }
+var graphicManager = new GraphicManager();
