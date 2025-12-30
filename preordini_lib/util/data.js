@@ -1,13 +1,7 @@
-// ======================================================================
-//  VARIABILI GLOBALI PER MENU
-// ======================================================================
 var elencoPrincipale = [];
 var categorie = [];
 var elencoPietanze = {};
 
-// ======================================================================
-//  CARICAMENTO JSONP DA APPS SCRIPT
-// ======================================================================
 function popolaMenuDaCSV() {
     const API_URL = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
@@ -17,7 +11,6 @@ function popolaMenuDaCSV() {
         jsonp: "callback",
         jsonpCallback: "callback",
         success: function (data) {
-            console.log("✔ Dati API caricati:", data);
             const raw = data.filter(r => r.id && String(r.CAT).trim());
             const categorieMap = {};
 
@@ -37,11 +30,7 @@ function popolaMenuDaCSV() {
             elencoPietanze = {};
             categorie.forEach(c => elencoPietanze[c.descrizione] = c.articoli);
 
-            console.log("✔ Menu caricato:", elencoPrincipale);
             if (typeof avviaApplicazione === "function") avviaApplicazione();
-        },
-        error: function (xhr, status, error) {
-            console.error("❌ Errore JSONP:", status, error);
         }
     });
 }
@@ -52,15 +41,11 @@ function Data() {
     this.getInstanceHashmap = function () {
         var saved = $.cookie("hashmap");
         if (!saved) return new HashMap();
-        try {
-            return HashMap.fromObject(JSON.parse(saved));
-        } catch (e) { return new HashMap(); }
+        try { return HashMap.fromObject(JSON.parse(saved)); } catch (e) { return new HashMap(); }
     };
-
     this.saveInstanceHashmap = function (map) {
         $.cookie("hashmap", JSON.stringify(map.toObject()), { expires: 1 });
     };
-
     this.getInstanceCoperti = function () { return $.cookie("coperti") || ""; };
     this.saveInstanceCoperti = function (v) { $.cookie("coperti", v, { expires: 1 }); };
 }
