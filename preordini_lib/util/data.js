@@ -3,22 +3,25 @@ var elencoPietanze = {};
 
 function DataManager() {
     this.caricaDati = function() {
-        var urlWebApp = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec?callback=?";
+        var urlWebApp = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
-        console.log("Caricamento dati tramite JSONP...");
+        console.log("Tentativo caricamento JSONP da Google...");
 
         $.ajax({
             url: urlWebApp,
-            dataType: 'jsonp', // Indica a jQuery di aspettarsi il formato 'callback(...)'
+            dataType: "jsonp",
+            jsonpCallback: "callback", // Obbligatorio perché il tuo script risponde con 'callback(...)'
             success: function(data) {
-                // Pulizia liste per evitare duplicati in caso di refresh
+                console.log("Dati ricevuti con successo:", data);
+                
+                // Reset per evitare duplicati
                 elencoPrincipale = [];
                 elencoPietanze = {};
 
                 data.forEach(function(riga) {
-                    var categoria = riga.CAT; // Usa 'CAT' come nel tuo file
+                    var categoria = riga.CAT; 
                     var pietanza = {
-                        ID: riga.id,          // Usa 'id' come nel tuo file
+                        ID: riga.id,
                         descrizione: riga.descrizione,
                         prezzo: riga.prezzo
                     };
@@ -30,17 +33,15 @@ function DataManager() {
                     elencoPietanze[categoria].push(pietanza);
                 });
 
-                console.log("Dati caricati correttamente. Categorie trovate:", elencoPrincipale);
                 $(document).trigger("datiPronti");
             },
-            error: function(e) {
-                console.error("Errore nel caricamento JSONP:", e);
-                alert("Impossibile caricare il menu. Controlla la connessione.");
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("Errore AJAX:", textStatus, errorThrown);
+                alert("Errore nel caricamento del menù da Google. Verifica la connessione.");
             }
         });
     };
 
-    // Mantieni le funzioni saveInstanceHashmap, getInstanceHashmap e eliminaOrdine identiche a prima
     this.saveInstanceHashmap = function(hashmap) {
         var str = "";
         hashmap.keys().forEach(function(key) { str += key + ":" + hashmap.get(key) + ";"; });
