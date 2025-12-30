@@ -44,38 +44,45 @@ function GraphicManager() {
         });
     };
 
-    // AGGIORNATO: Ora calcola il totale Euro
+    // =============================================================
+    // FUNZIONE RESOCONTO AGGIORNATA CON TOTALE
+    // =============================================================
     this.popolaResoconto = function () {
         const hashmap = dataManager.getInstanceHashmap();
         let html = `<h3>Riepilogo Ordine</h3>
-                    <p><b>Nome:</b> ${$("#nomecliente").val()}<br>
+                    <p><b>Cliente:</b> ${$("#nomecliente").val()}<br>
                     <b>Tavolo:</b> ${$("#tavolo").val()}<br>
-                    <b>Persone:</b> ${$("#coperti").val()}</p><hr>`;
+                    <b>Coperti:</b> ${$("#coperti").val()}</p><hr>`;
         
-        let totaleComplessivo = 0;
+        let totaleEuro = 0;
 
         elencoPrincipale.forEach(cat => {
-            const articoliOrdinati = (elencoPietanze[cat] || []).filter(p => hashmap.contains(String(p.id)));
-            
-            if (articoliOrdinati.length > 0) {
-                html += `<div style="background:#444; padding:5px; margin-top:10px;"><b>${cat}</b></div>`;
-                articoliOrdinati.forEach(p => {
-                    const qta = hashmap.get(String(p.id));
-                    const prezzoUnitario = Number(p.prezzo) || 0;
-                    const subTotale = qta * prezzoUnitario;
-                    totaleComplessivo += subTotale;
+            const articoliInCategoria = (elencoPietanze[cat] || []);
+            // Filtriamo solo quelli che hanno una quantità > 0 nella hashmap
+            const ordinati = articoliInCategoria.filter(p => hashmap.contains(String(p.id)));
 
-                    html += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #555;">
-                                <span>${p.descrizione} x ${qta}</span>
-                                <span>${subTotale.toFixed(2)} €</span>
-                             </div>`;
+            if (ordinati.length > 0) {
+                html += `<div style="margin-top:10px; color:#aaa; font-size:0.9em;">${cat.toUpperCase()}</div>`;
+                ordinati.forEach(p => {
+                    const qta = hashmap.get(String(p.id));
+                    const prezzo = Number(p.prezzo) || 0;
+                    const subTotale = qta * prezzo;
+                    totaleEuro += subTotale;
+
+                    html += `
+                        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom: 1px dotted #444;">
+                            <div style="width:60%">${p.descrizione} (x${qta})</div>
+                            <div style="width:40%; text-align:right;">${subTotale.toFixed(2)} €</div>
+                        </div>`;
                 });
             }
         });
 
-        html += `<hr><div style="text-align:right; font-size:1.2em; margin-top:10px;">
-                    <strong>TOTALE ORDINE: ${totaleComplessivo.toFixed(2)} €</strong>
-                 </div>`;
+        html += `
+            <div style="margin-top:20px; padding:10px; background:#333; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:1.2em;">TOTALE</span>
+                <span style="font-size:1.5em; color:#43b261; font-weight:bold;">${totaleEuro.toFixed(2)} €</span>
+            </div>`;
         
         $("#resoconto").html(html);
     };
