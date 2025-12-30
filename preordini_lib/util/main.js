@@ -1,25 +1,23 @@
 $(document).on("datiPronti", function () {
-    console.log("Inizializzo l'applicazione...");
-    
+    console.log("Inizializzazione Menu e Pulsanti...");
     var hashmap = dataManager.getInstanceHashmap();
     
-    // Costruisce il menu
+    // Genera l'HTML del menu
     $("#lista").html(graphicManager.generateMenu(hashmap)).collapsibleset("refresh");
     
-    // Attiva i pulsanti + e -
+    // Inizializza i pulsanti + e -
     graphicManager.setButtonPlusMinus(hashmap);
 
-    // Gestione navigazione Resoconto
+    // Gestione pulsanti di navigazione
     $("#resoconto-btn").on("click", function () {
         if (hashmap.keys().length > 0) {
             graphicManager.popolaResoconto();
             $(":mobile-pagecontainer").pagecontainer("change", "#pageres");
         } else {
-            alert("Scegli almeno un piatto prima di continuare!");
+            alert("L'ordine è vuoto! Seleziona qualcosa dal menù.");
         }
     });
 
-    // Gestione navigazione QR Code
     $("#conferma-btn").on("click", function () {
         var n = $("#nomecliente").val();
         var t = $("#tavolo").val();
@@ -29,13 +27,12 @@ $(document).on("datiPronti", function () {
             graphicManager.popolaQRCode();
             $(":mobile-pagecontainer").pagecontainer("change", "#pageqrcode");
         } else {
-            alert("Compila tutti i campi: Nome, Tavolo e Quanti siete!");
+            alert("Per favore, inserisci Nome, Tavolo e numero di Persone.");
         }
     });
 
-    // Reset ordine
     $("#elimina-ordine-btn, #nuovo-ordine-btn").on("click", function () {
-        if(confirm("Vuoi annullare l'ordine corrente?")) {
+        if(confirm("Sei sicuro di voler eliminare l'ordine?")) {
             dataManager.eliminaOrdine();
         }
     });
