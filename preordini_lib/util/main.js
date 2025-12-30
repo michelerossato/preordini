@@ -1,49 +1,42 @@
-$(document).ready(function () {
-    // Inizializzazione dati e grafica
+$(document).on("datiPronti", function () {
+    console.log("Inizializzo l'applicazione...");
+    
     var hashmap = dataManager.getInstanceHashmap();
     
-    // Genera il menu nella pagina principale
+    // Costruisce il menu
     $("#lista").html(graphicManager.generateMenu(hashmap)).collapsibleset("refresh");
+    
+    // Attiva i pulsanti + e -
     graphicManager.setButtonPlusMinus(hashmap);
 
-    // Gestione tasto "Vedi resoconto"
+    // Gestione navigazione Resoconto
     $("#resoconto-btn").on("click", function () {
         if (hashmap.keys().length > 0) {
             graphicManager.popolaResoconto();
             $(":mobile-pagecontainer").pagecontainer("change", "#pageres");
         } else {
-            // Se l'ordine è vuoto mostra un avviso
-            alert("L'ordine è vuoto! Seleziona almeno un prodotto.");
+            alert("Scegli almeno un piatto prima di continuare!");
         }
     });
 
-    // Gestione tasto "Modifica Ordine" (Torna indietro)
-    $("#modifica-btn").on("click", function () {
-        $(":mobile-pagecontainer").pagecontainer("change", "#pageprinc");
-    });
-
-    // Gestione tasto "Conferma Ordine" (Genera QR)
+    // Gestione navigazione QR Code
     $("#conferma-btn").on("click", function () {
-        var nome = $("#nomecliente").val();
-        var tavolo = $("#tavolo").val();
+        var n = $("#nomecliente").val();
+        var t = $("#tavolo").val();
+        var c = $("#coperti").val();
 
-        if (!nome || !tavolo) {
-            alert("Per favore inserisci Nome e Numero Tavolo prima di confermare.");
-        } else {
+        if (n && t && c) {
             graphicManager.popolaQRCode();
             $(":mobile-pagecontainer").pagecontainer("change", "#pageqrcode");
+        } else {
+            alert("Compila tutti i campi: Nome, Tavolo e Quanti siete!");
         }
     });
 
-    // Gestione tasto "Elimina ordine"
-    $("#elimina-ordine-btn").on("click", function () {
-        if (confirm("Vuoi davvero eliminare l'intero ordine?")) {
+    // Reset ordine
+    $("#elimina-ordine-btn, #nuovo-ordine-btn").on("click", function () {
+        if(confirm("Vuoi annullare l'ordine corrente?")) {
             dataManager.eliminaOrdine();
         }
-    });
-
-    // Gestione tasto "Nuovo Ordine" (Dalla pagina QR)
-    $("#nuovo-ordine-btn").on("click", function () {
-        dataManager.eliminaOrdine();
     });
 });
