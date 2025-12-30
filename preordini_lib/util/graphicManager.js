@@ -1,13 +1,10 @@
 function GraphicManager() {
     this.generateMenu = function (hashmap) {
-        // Form iniziale con Nome, Tavolo e Quanti siete
-        var html = '<div class="form-ordine" style="padding: 10px; background: #333; border-radius: 8px; margin-bottom: 15px;">' +
-                   '<label for="nomecliente">Nome:</label>' +
+        // Form superiore con i 3 campi richiesti
+        var html = '<div class="form-ordine" style="padding:15px; background:#222; border-radius:10px; margin-bottom:20px;">' +
                    '<input type="text" id="nomecliente" placeholder="Inserisci il tuo nome">' +
-                   '<label for="tavolo">Tavolo:</label>' +
                    '<input type="text" id="tavolo" placeholder="Numero tavolo">' +
-                   '<label for="coperti">Quanti siete?:</label>' +
-                   '<input type="number" id="coperti" placeholder="Numero persone" min="1">' +
+                   '<input type="number" id="coperti" placeholder="Quanti siete?" min="1">' +
                    '</div>';
 
         elencoPrincipale.forEach(function(cat) {
@@ -15,18 +12,18 @@ function GraphicManager() {
             html += '<div data-role="collapsible"><h4>' + cat + '</h4>';
             
             articoli.forEach(function(p) {
-                var id = String(p.ID); // ID del record menuweb
+                var id = String(p.ID);
                 var nome = p.descrizione || "";
                 var prezzo = Number(p.prezzo) || 0;
                 var qta = hashmap.contains(id) ? hashmap.get(id) : 0;
 
-                html += '<div class="content-pietanza-ordine" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">' +
-                        '<div style="flex: 2;">' + nome + '</div>' +
-                        '<div style="flex: 1; text-align: center;">' + prezzo.toFixed(2) + ' €</div>' +
-                        '<div style="flex: 1; display: flex; align-items: center; justify-content: flex-end;">' +
-                        '<button class="minus-btn ui-btn ui-btn-inline ui-corner-all" id="minus' + id + '">−</button>' +
-                        '<span id="quantita' + id + '" style="margin: 0 10px;">' + qta + '</span>' +
-                        '<button class="plus-btn ui-btn ui-btn-inline ui-corner-all" id="plus' + id + '">+</button>' +
+                html += '<div class="content-pietanza-ordine" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">' +
+                        '<div style="width:50%">' + nome + '</div>' +
+                        '<div style="width:20%">' + prezzo.toFixed(2) + ' €</div>' +
+                        '<div style="width:35%; text-align:right;">' +
+                        '<button class="minus-btn ui-btn ui-btn-inline" id="minus' + id + '">−</button>' +
+                        '<span id="quantita' + id + '" style="margin:0 5px;">' + qta + '</span>' +
+                        '<button class="plus-btn ui-btn ui-btn-inline" id="plus' + id + '">+</button>' +
                         '</div></div>';
             });
             html += '</div>';
@@ -48,15 +45,13 @@ function GraphicManager() {
 
     this.popolaResoconto = function () {
         var hashmap = dataManager.getInstanceHashmap();
-        var html = "<h3>Riepilogo Dati:</h3>";
-        html += "<p><b>Nome:</b> " + $("#nomecliente").val() + "</p>";
-        html += "<p><b>Tavolo:</b> " + $("#tavolo").val() + "</p>";
-        html += "<p><b>Persone:</b> " + $("#coperti").val() + "</p><hr>";
+        var html = "<h3>Riepilogo Ordine</h3>";
+        html += "<p><b>Cliente:</b> " + $("#nomecliente").val() + "<br><b>Tavolo:</b> " + $("#tavolo").val() + "<br><b>Persone:</b> " + $("#coperti").val() + "</p><hr>";
 
         elencoPrincipale.forEach(function(cat) {
             var articoli = (elencoPietanze[cat] || []).filter(function(p) { return hashmap.contains(String(p.ID)); });
             if (articoli.length > 0) {
-                html += '<h4>' + cat + '</h4>';
+                html += '<b>' + cat + '</b>';
                 articoli.forEach(function(p) {
                     html += '<p>' + p.descrizione + ' x ' + hashmap.get(String(p.ID)) + '</p>';
                 });
@@ -69,8 +64,8 @@ function GraphicManager() {
         $("#qrcode").empty();
         var testoCodificato = qrcodeManager.generaTestoOrdine();
         var qrCode = new QRCodeStyling({
-            width: 250,
-            height: 250,
+            width: 300,
+            height: 300,
             data: testoCodificato,
             dotsOptions: { color: "#43b261", type: "rounded" },
             cornersSquareOptions: { color: "#178435", type: "extra-rounded" }
@@ -78,4 +73,3 @@ function GraphicManager() {
         qrCode.append(document.getElementById("qrcode"));
     };
 }
-var graphicManager = new GraphicManager();
