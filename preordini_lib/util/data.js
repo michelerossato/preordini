@@ -5,58 +5,41 @@ var elencoPrincipale = [];
 var categorie = [];
 var elencoPietanze = {};
 
-
 // ======================================================================
-//  CARICAMENTO JSONP DA APPS SCRIPT (SOLUZIONE CORS)
+//  CARICAMENTO JSONP DA APPS SCRIPT
 // ======================================================================
 function popolaMenuDaCSV() {
-
     const API_URL = "https://script.google.com/macros/s/AKfycbxxc7r_TmQwX37jNrp34oB85JjeUNWUj74lvLUfXFRhpeIY8hG5RxaZe8opLZJJ6HU_wQ/exec";
 
     $.ajax({
         url: API_URL,
         dataType: "jsonp",
-        jsonp: "callback",     // <-- Google Apps Script vuole *esattamente* questo
-        jsonpCallback: "callback", // <-- deve combaciare con il default del tuo script
-
+        jsonp: "callback",
+        jsonpCallback: "callback",
         success: function (data) {
-
             console.log("✔ Dati API caricati:", data);
-
             const raw = data.filter(r => r.id && String(r.CAT).trim());
-
             const categorieMap = {};
 
             raw.forEach(r => {
                 const cat = String(r.CAT).trim();
-
                 if (!categorieMap[cat]) {
-                    categorieMap[cat] = {
-                        descrizione: cat,
-                        articoli: []
-                    };
+                    categorieMap[cat] = { descrizione: cat, articoli: [] };
                 }
-
                 r.id = parseInt(r.id, 10) || 0;
                 r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
                 r.nome = r.descrizione;
-
                 categorieMap[cat].articoli.push(r);
             });
 
             categorie = Object.values(categorieMap);
             elencoPrincipale = categorie.map(c => c.descrizione);
-
             elencoPietanze = {};
             categorie.forEach(c => elencoPietanze[c.descrizione] = c.articoli);
 
-            console.log("✔ Menu caricato con successo:", elencoPrincipale);
-
-            if (typeof avviaApplicazione === "function") {
-                avviaApplicazione();
-            }
+            console.log("✔ Menu caricato:", elencoPrincipale);
+            if (typeof avviaApplicazione === "function") avviaApplicazione();
         },
-
         error: function (xhr, status, error) {
             console.error("❌ Errore JSONP:", status, error);
         }
@@ -65,34 +48,19 @@ function popolaMenuDaCSV() {
 
 popolaMenuDaCSV();
 
-
-// ======================================================================
-//  CLASSE DATA
-// ======================================================================
 function Data() {
-
     this.getInstanceHashmap = function () {
         var saved = $.cookie("hashmap");
         if (!saved) return new HashMap();
-
         try {
-            var obj = JSON.parse(saved);
-            return HashMap.fromObject(obj);
-        } catch (e) {
-            console.error("Errore lettura cookie:", e);
-            return new HashMap();
-        }
+            return HashMap.fromObject(JSON.parse(saved));
+        } catch (e) { return new HashMap(); }
     };
 
     this.saveInstanceHashmap = function (map) {
         $.cookie("hashmap", JSON.stringify(map.toObject()), { expires: 1 });
     };
 
-    this.getInstanceCoperti = function () {
-        return $.cookie("coperti") || "";
-    };
-
-    this.saveInstanceCoperti = function (v) {
-        $.cookie("coperti", v, { expires: 1 });
-    };
+    this.getInstanceCoperti = function () { return $.cookie("coperti") || ""; };
+    this.saveInstanceCoperti = function (v) { $.cookie("coperti", v, { expires: 1 }); };
 }
