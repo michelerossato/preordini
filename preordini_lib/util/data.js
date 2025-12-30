@@ -11,9 +11,14 @@ function popolaMenuDaCSV() {
         jsonp: "callback",
         jsonpCallback: "callback",
         success: function (data) {
-            const raw = data.filter(r => r.id && String(r.CAT).trim());
-            const categorieMap = {};
+            // 🔥 FILTRO: Esclude articoli se id manca o se disponibilita è "0"
+            const raw = data.filter(r => {
+                const idValido = r.id && String(r.CAT).trim();
+                const disponibile = String(r.disponibilita) !== "0"; 
+                return idValido && disponibile;
+            });
 
+            const categorieMap = {};
             raw.forEach(r => {
                 const cat = String(r.CAT).trim();
                 if (!categorieMap[cat]) {
@@ -21,7 +26,6 @@ function popolaMenuDaCSV() {
                 }
                 r.id = parseInt(r.id, 10) || 0;
                 r.prezzo = parseFloat(String(r.prezzo).replace(",", ".")) || 0;
-                r.nome = r.descrizione;
                 categorieMap[cat].articoli.push(r);
             });
 
@@ -34,7 +38,6 @@ function popolaMenuDaCSV() {
         }
     });
 }
-
 popolaMenuDaCSV();
 
 function Data() {
