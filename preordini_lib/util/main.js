@@ -1,114 +1,49 @@
-// ======================================================================
-// MANAGER GLOBALI
-// ======================================================================
-var graphicManager;
-var dataManager;
-var qrcodeManager;
-
-
-// ======================================================================
-// AVVIO APPLICAZIONE (chiamata da data.js)
-// ======================================================================
-function avviaApplicazione() {
-
-    console.log("Applicazione avviata. Inizializzo i manager...");
-
-    dataManager = new Data();
-    graphicManager = new GraphicManager();
-    qrcodeManager = new QRCodeManager();
-
-    function costruisciMenu() {
-
-        var hashmap = dataManager.getInstanceHashmap();
-
-        $("#lista")
-            .empty()
-            .html(graphicManager.generateMenu(hashmap))
-            .trigger("create");
-
-        graphicManager.setButtonPlusMinus(hashmap);
-
-        $("#coperti").val(dataManager.getInstanceCoperti());
-    }
-
-    costruisciMenu();
-    $(document).on("pageshow", "#pageprinc", costruisciMenu);
-}
-
-
-// ======================================================================
-// EVENTI BOTTONI
-// ======================================================================
-
-// ---------------------
-// VEDI RESOCONTO
-// ---------------------
-$(document).on("click", "#resoconto-btn", function (evt) {
-    evt.preventDefault();
-
+$(document).ready(function () {
+    // Inizializzazione dati e grafica
     var hashmap = dataManager.getInstanceHashmap();
+    
+    // Genera il menu nella pagina principale
+    $("#lista").html(graphicManager.generateMenu(hashmap)).collapsibleset("refresh");
+    graphicManager.setButtonPlusMinus(hashmap);
 
-    // ✅ CONTROLLO CORRETTO
-    if (hashmap.size() === 0) {
-        graphicManager.generatePopup();
-        $("#popup-ordine").popup("open");
-        return;
-    }
+    // Gestione tasto "Vedi resoconto"
+    $("#resoconto-btn").on("click", function () {
+        if (hashmap.keys().length > 0) {
+            graphicManager.popolaResoconto();
+            $(":mobile-pagecontainer").pagecontainer("change", "#pageres");
+        } else {
+            // Se l'ordine è vuoto mostra un avviso
+            alert("L'ordine è vuoto! Seleziona almeno un prodotto.");
+        }
+    });
 
-    dataManager.saveInstanceHashmap(hashmap);
-    dataManager.saveInstanceCoperti($("#coperti").val());
+    // Gestione tasto "Modifica Ordine" (Torna indietro)
+    $("#modifica-btn").on("click", function () {
+        $(":mobile-pagecontainer").pagecontainer("change", "#pageprinc");
+    });
 
-    graphicManager.popolaResoconto();
+    // Gestione tasto "Conferma Ordine" (Genera QR)
+    $("#conferma-btn").on("click", function () {
+        var nome = $("#nomecliente").val();
+        var tavolo = $("#tavolo").val();
 
-    $.mobile.pageContainer.pagecontainer("change", "#pageres");
-});
+        if (!nome || !tavolo) {
+            alert("Per favore inserisci Nome e Numero Tavolo prima di confermare.");
+        } else {
+            graphicManager.popolaQRCode();
+            $(":mobile-pagecontainer").pagecontainer("change", "#pageqrcode");
+        }
+    });
 
+    // Gestione tasto "Elimina ordine"
+    $("#elimina-ordine-btn").on("click", function () {
+        if (confirm("Vuoi davvero eliminare l'intero ordine?")) {
+            dataManager.eliminaOrdine();
+        }
+    });
 
-// ---------------------
-// ELIMINA ORDINE
-// ---------------------
-$(document).on("click", "#elimina-ordine-btn", function (evt) {
-    evt.preventDefault();
-
-    if (!confirm("Sei sicuro di voler eliminare l'ordine attuale?")) return;
-
-    dataManager.saveInstanceHashmap(new HashMap());
-    dataManager.saveInstanceCoperti("");
-
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
-});
-
-
-// ---------------------
-// MODIFICA ORDINE
-// ---------------------
-$(document).on("click", "#modifica-btn", function (evt) {
-    evt.preventDefault();
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
-});
-
-
-// ---------------------
-// CONFERMA ORDINE
-// ---------------------
-$(document).on("click", "#conferma-btn", function (evt) {
-    evt.preventDefault();
-
-    graphicManager.popolaQRCode();
-    $.mobile.pageContainer.pagecontainer("change", "#pageqrcode");
-});
-
-
-// ---------------------
-// NUOVO ORDINE
-// ---------------------
-$(document).on("click", "#nuovo-ordine-btn", function (evt) {
-    evt.preventDefault();
-
-    if (!confirm("Vuoi davvero iniziare un nuovo ordine?")) return;
-
-    dataManager.saveInstanceHashmap(new HashMap());
-    dataManager.saveInstanceCoperti("");
-
-    $.mobile.pageContainer.pagecontainer("change", "#pageprinc");
+    // Gestione tasto "Nuovo Ordine" (Dalla pagina QR)
+    $("#nuovo-ordine-btn").on("click", function () {
+        dataManager.eliminaOrdine();
+    });
 });
