@@ -1,5 +1,21 @@
+var elencoPrincipale = [];
+var elencoPietanze = {};
+
 function DataManager() {
-    this.saveInstanceHashmap = function (hashmap) {
+    this.caricaDati = function() {
+        var self = this;
+        // Sostituisci questo URL con il link al tuo file CSV/API
+        $.get("preordini_lib/util/menu.csv", function(data) {
+            // Logica di parsing del CSV (semplificata)
+            // Assicurati che qui vengano popolati elencoPrincipale e elencoPietanze
+            console.log("Dati API caricati");
+            
+            // Una volta finito il caricamento, avvisa il sistema
+            $(document).trigger("datiPronti");
+        });
+    };
+
+    this.saveInstanceHashmap = function(hashmap) {
         var str = "";
         hashmap.keys().forEach(function(key) {
             str += key + ":" + hashmap.get(key) + ";";
@@ -7,7 +23,7 @@ function DataManager() {
         $.cookie("ordine_hashmap", str, { expires: 1 });
     };
 
-    this.getInstanceHashmap = function () {
+    this.getInstanceHashmap = function() {
         var hashmap = new HashMap();
         var cookie = $.cookie("ordine_hashmap");
         if (cookie) {
@@ -28,5 +44,5 @@ function DataManager() {
 }
 
 var dataManager = new DataManager();
-var graphicManager = new GraphicManager();
-var qrcodeManager = new QRCodeManager();
+// Avvia il caricamento dei dati
+dataManager.caricaDati();
